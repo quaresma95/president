@@ -311,6 +311,9 @@
     padding: 5px 5px 5px 5px;
     width: auto;
     margin-bottom: 5px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-size: 14px;
 }
 
 .card_places {

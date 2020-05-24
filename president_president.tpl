@@ -6,7 +6,7 @@
 
     <!-- BEGIN player -->
     <div class="player_card card_place_{NB_PLAYER}_{PLACE_ID}">
-        <p class="player_name whiteblock" style="color:#{PLAYER_COLOR}">
+        <p class="player_name whiteblock" title="{PLAYER_NAME}" style="color:#{PLAYER_COLOR}">
             {PLAYER_NAME}
         </p>
         <div id="player_cards_{PLAYER_ID}" class="card_places">

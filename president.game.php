@@ -511,7 +511,7 @@ EOT;
 
         // And notify
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays a ${nb_cards} ${value_displayed}'), [
-            'i18n' => ['value_displayed'],
+            'i18n' => ['nb_cards', 'value_displayed'],
             'cards' => $cards,
             'card_id' => $currentCard['id'],
             'player_id' => $player_id,
