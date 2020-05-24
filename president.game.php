@@ -448,11 +448,11 @@ EOT;
             self::DbQuery( $sql );
 
             $role = $this->players_roles[self::getGameStateValue('nbPlayers')][$position];
-            self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} plays has finished ${role}'), [
+            self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} become\'s ${role}'), [
                 'role' => $role,
                 'role_position' => $position,
                 'player_name' => self::getActivePlayerName(),
-                'i18n' => ['color_displayed', 'value_displayed'],
+                'i18n' => ['role'],
             ]);
         }
     }
@@ -511,7 +511,7 @@ EOT;
 
         // And notify
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays a ${nb_cards} ${value_displayed}'), [
-            'i18n' => ['color_displayed', 'value_displayed'],
+            'i18n' => ['value_displayed'],
             'cards' => $cards,
             'card_id' => $currentCard['id'],
             'player_id' => $player_id,
@@ -531,7 +531,6 @@ EOT;
             // skip next player
             $this->gamestate->nextState('nextPlayer');
             self::notifyAllPlayers('playerSkipped', clienttranslate('${player_name} skip ${player_name_skipped}'), [
-                'i18n' => ['color_displayed', 'value_displayed'],
                 'player_name' => self::getActivePlayerName(),
                 'player_name_skipped' => $players[ $next_player_id ]['player_name']
             ]);
@@ -746,11 +745,11 @@ EOT;
 
         $this->setUpNewRound();
         $role = $this->players_roles[$nbPlayers][$position];
-        self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} plays has finished ${role}'), [
+        self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} become\'s ${role}'), [
             'role' => $role,
             'role_position' => $position,
             'player_name' => $lastPlayer['player_name'],
-            'i18n' => ['color_displayed', 'value_displayed'],
+            'i18n' => ['role'],
         ]);
 
         $this->gamestate->changeActivePlayer( $lastPlayer['player_id'] );
@@ -819,7 +818,6 @@ EOT;
         $player = current($players);
 
         self::notifyAllPlayers('playerWon', clienttranslate('${player_name} won'), [
-            'i18n' => ['color_displayed', 'value_displayed'],
             'player_name' => $player['name'],
         ]);
     }
