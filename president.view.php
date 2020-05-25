@@ -19,7 +19,7 @@
         $current_player_id = $g_user->get_id();
         $nb_cards = $this->game->cards->countCardsByLocationArgs('hand');
         
-        if (in_array($current_player_id, $allPlayers)) {
+        if (array_key_exists ($current_player_id, $allPlayers)) {
           $players[$current_player_id] = $allPlayers[$current_player_id];
           for ($i = 0 ; $i < 4; $i++) {
             $current_player_id = $this->game->getPlayerAfter( $current_player_id );

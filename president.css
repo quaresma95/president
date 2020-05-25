@@ -313,7 +313,8 @@
     margin-bottom: 5px;
     text-overflow: ellipsis;
     overflow: hidden;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: bold;
 }
 
 .card_places {
