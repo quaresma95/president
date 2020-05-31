@@ -150,7 +150,7 @@
 
 .card_place_4_1 {
     left: 42%;
-    bottom: 10%
+    bottom: 11%
 }
 
 .card_place_4_2 {
@@ -160,7 +160,7 @@
 
 .card_place_4_3 {
     left: 42%;
-    top: 1%
+    top: 0%
 }
 
 .card_place_4_4 {
@@ -170,7 +170,7 @@
 
 .card_place_5_1 {
     left: 42%;
-    bottom: 10%
+    bottom: 11%
 }
 
 .card_place_5_2 {
@@ -180,12 +180,12 @@
 
 .card_place_5_3 {
     left: 25%;
-    top: 1%
+    top: 0%
 }
 
 .card_place_5_4 {
     left: 64%;
-    top: 1%
+    top: 0%
 }
 
 .card_place_5_5 {
@@ -195,7 +195,7 @@
 
 .card_place_6_1 {
     left: 42%;
-    bottom: 10%
+    bottom: 11%
 }
 
 .card_place_6_2 {
@@ -210,7 +210,7 @@
 
 .card_place_6_4 {
     left: 42%;
-    top: 1%
+    top: 0%
 }
 
 .card_place_6_5 {
@@ -225,7 +225,7 @@
 
 .card_place_7_1 {
     left: 42%;
-    bottom: 10%
+    bottom: 11%
 }
 
 .card_place_7_2 {
@@ -240,12 +240,12 @@
 
 .card_place_7_4 {
     left: 30%;
-    top: 2%
+    top: 0%
 }
 
 .card_place_7_5 {
     left: 58%;
-    top: 2%
+    top: 0%
 }
 
 .card_place_7_6 {
@@ -260,7 +260,7 @@
 
 .card_place_8_1 {
     left: 42%;
-    bottom: 10%
+    bottom: 11%
 }
 
 .card_place_8_2 {
@@ -275,17 +275,17 @@
 
 .card_place_8_4 {
     left: 22%;
-    top: 2%
+    top: 1%
 }
 
 .card_place_8_5 {
     left: 42%;
-    top: 1%
+    top: 0%
 }
 
 .card_place_8_6 {
     left: 65%;
-    top: 2%
+    top: 1%
 }
 
 .card_place_8_7 {
@@ -311,8 +311,7 @@
     padding: 5px 5px 5px 5px;
     width: auto;
     margin-bottom: 5px;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    word-wrap:break-word;
     font-size: 13px;
     font-weight: bold;
 }
@@ -340,7 +339,7 @@
 
     .card_place_4_1 {
         left: 40%;
-        bottom: 10%
+        bottom: 11%
     }
 
     .card_place_4_2 {
@@ -350,7 +349,7 @@
 
     .card_place_4_3 {
         left: 40%;
-        top: 1%
+        top: 0%
     }
 
     .card_place_4_4 {
@@ -360,7 +359,7 @@
 
     .card_place_5_1 {
         left: 40%;
-        bottom: 10%
+        bottom: 11%
     }
 
     .card_place_5_2 {
@@ -370,12 +369,12 @@
 
     .card_place_5_3 {
         left: 20%;
-        top: 1%
+        top: 0%
     }
 
     .card_place_5_4 {
         left: 60%;
-        top: 1%
+        top: 0%
     }
 
     .card_place_5_5 {
@@ -385,7 +384,7 @@
 
     .card_place_6_1 {
         left: 40%;
-        bottom: 10%
+        bottom: 11%
     }
 
     .card_place_6_2 {
@@ -400,7 +399,7 @@
 
     .card_place_6_4 {
         left: 40%;
-        top: 1%
+        top: 0%
     }
 
     .card_place_6_5 {
@@ -415,7 +414,7 @@
 
     .card_place_7_1 {
         left: 40%;
-        bottom: 10%
+        bottom: 11%
     }
 
     .card_place_7_2 {
@@ -431,12 +430,12 @@
 
     .card_place_7_4 {
         left: 25%;
-        top: 2%
+        top: 0%
     }
 
     .card_place_7_5 {
         left: 55%;
-        top: 2%
+        top: 0%
     }
 
     .card_place_7_6 {
@@ -451,7 +450,7 @@
 
     .card_place_8_1 {
         left: 40%;
-        bottom: 9%
+        bottom: 11%
     }
 
     .card_place_8_2 {
@@ -466,7 +465,7 @@
 
     .card_place_8_4 {
         left: 18%;
-        top: 2%
+        top: 1%
     }
 
     .card_place_8_5 {
@@ -476,7 +475,7 @@
 
     .card_place_8_6 {
         left: 62%;
-        top: 2%
+        top: 1%
     }
 
     .card_place_8_7 {

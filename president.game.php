@@ -448,7 +448,7 @@ EOT;
             self::DbQuery( $sql );
 
             $role = $this->players_roles[self::getGameStateValue('nbPlayers')][$position];
-            self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} become\'s ${role}'), [
+            self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} becomes ${role}'), [
                 'role' => $role,
                 'role_position' => $position,
                 'player_name' => self::getActivePlayerName(),
@@ -758,7 +758,7 @@ EOT;
 
         // Apply scores to player
         foreach ( $players as $player_id => $player ) {
-            $message = self::_('${player_name} looses ${nbr} points');
+            $message = self::_('${player_name} loses ${nbr} points');
             if ($lastPlayer['player_id'] == $player_id) {
                 $position = $nbPlayers;
             } else {

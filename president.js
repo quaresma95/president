@@ -8,6 +8,7 @@ define([
     "ebg/counter",
     "ebg/stock"
 ],
+
 function (dojo, declare) {
     return declare("bgagame.president", ebg.core.gamegui, {
         constructor: function(){
@@ -156,8 +157,8 @@ function (dojo, declare) {
             this.addTooltipToClass( 'revolution', '', _('Revolution the cards order are reversed'), '' );
             this.addTooltipToClass( 'passClass', '', _('This player are out of the round'), '' );
             this.addTooltipToClass( 'playingClass', '', _('This player is still playing'), '' );
-            this.addTooltipToClass( 'iconPresident', '', _('At the beggining of each game the "president" will reiceve the 2 best cards of the "beggar" and must give 2 cards of his choice'));
-            this.addTooltipToClass( 'iconPrimeMinister', '', _('At the beggining of each game the "prime minister" will reiceve the best card of the "peasent" and must give 1 card of his choice'));
+            this.addTooltipToClass( 'iconPresident', '', _('At the beginning of each game the "president" will receive the 2 best cards of the "beggar" and must give 2 cards of his choice'));
+            this.addTooltipToClass( 'iconPrimeMinister', '', _('At the beginning of each game the "prime minister" will receive the best card of the "peasant" and must give 1 card of his choice'));
             this.addTooltipToClass( 'iconCitizen', '', _('The "Citizen" don\'t swap cards'));
             this.addTooltipToClass( 'iconPeasant', '', _('The "Peasant" must give his best card to the "Prime-Minister"'));
             this.addTooltipToClass( 'iconBeggar', '', _('The "Beggar" must give his 2 best cards to the "President"'));
@@ -440,6 +441,7 @@ function (dojo, declare) {
             }
 
             this.playerHand.changeItemsWeight(items_weight);
+            this.setupToolTips();
         },
 
         notif_resetCounters : function(notif) {
