@@ -23,6 +23,16 @@
     height: 70px;
 }
 
+.cardIcon {
+    color: black;
+    font-weight: bold;
+    position: absolute;
+    background-color: white;
+    border-radius: 6px 6px 6px 6px;
+    padding: 2px;
+    text-align: center;
+}
+
 .player_table_4 {
     height: 550px;
     width: 520px;

@@ -171,9 +171,17 @@ function (dojo, declare) {
             var iconsPerRole = this.gamedatas.icons_per_position[this.gamedatas.nb_players];
             dojo.query( '#cards_board_p'+player_id).remove();
             this.gamedatas.nb_cards[player_id].nb_cards -= cards_played;
+            var nbCards = this.gamedatas.nb_cards[player_id].nb_cards;
+
+            dojo.place(this.format_block('jstpl_counterHand', {
+                id : player_id,
+                nbCards : nbCards,
+            }), $('playerCardCount_p'+player_id), 'replace');
+
+
             dojo.place( this.format_block('jstpl_player_board', {
                 id : player_id,
-                count : (this.gamedatas.nb_cards[player_id].nb_cards),
+                count : nbCards,
                 playingClass : notif.type == 'passTurn' ? 'qHidden' : '',
                 passClass : notif.type == 'passTurn' ? '' : 'qHidden',
                 roleClass : player.role == '0' ? 'qHidden' : iconsPerRole[player.role]
@@ -188,6 +196,18 @@ function (dojo, declare) {
             for ( var i in this.gamedatas.nb_cards) {
                 var nbCards = this.gamedatas.nb_cards[i].nb_cards;
                 var player = this.gamedatas.players[i];
+
+                dojo.place(this.format_block('jstpl_counterHand', {
+                    id : i,
+                    nbCards : nbCards,
+                }), $('player_cards_'+i));
+
+                if (player.role != '0') {
+                    dojo.place(this.format_block('jstpl_role', {
+                        id : i,
+                        roleClass : iconsPerRole[player.role]
+                    }), $('player_cards_'+i));
+                }
 
                 dojo.place( this.format_block('jstpl_player_board', {
                     id : i,
@@ -416,7 +436,7 @@ function (dojo, declare) {
         notif_newHand : function(notif) {
             // reset revolution state
             this.revolutionTrick = 0;
-            dojo.addClass( 'revolution_box', 'qHidden' );    
+            dojo.addClass( 'revolution_box', 'qHidden' );
 
             //clean table
             dojo.query('.cardOnTable').remove();
@@ -451,13 +471,25 @@ function (dojo, declare) {
                 var iconRole = this.gamedatas.icons_per_position[this.gamedatas.nb_players][role];
                 this.gamedatas.nb_cards[player_id].nb_cards = notif.args.nb_cards[player_id];
                 this.gamedatas.players[player_id].role = role;
+                var nbCards = this.gamedatas.nb_cards[player_id].nb_cards;
+
                 dojo.place( this.format_block('jstpl_player_board', {
                     id : player_id,
-                    count : (this.gamedatas.nb_cards[player_id].nb_cards),
+                    count : nbCards,
                     playingClass : '',
                     passClass : 'qHidden',
                     roleClass : iconRole
                 }), $('player_board_'+player_id) );
+
+                dojo.place(this.format_block('jstpl_counterHand', {
+                    id : player_id,
+                    nbCards : nbCards,
+                }), $('playerCardCount_p'+player_id), 'replace');
+                
+                dojo.place(this.format_block('jstpl_role', {
+                    id : player_id,
+                    roleClass : iconRole
+                }), $('player_cards_'+player_id));
             }
         },
 
@@ -471,8 +503,8 @@ function (dojo, declare) {
 
         notif_playCard : function(notif) {
             // Play a card on the table
-            this.updatePlayersBoard(notif);
             this.playCardOnTable(notif.args.player_id, notif.args.cards);
+            this.updatePlayersBoard(notif);
         },
 
         notif_swapCards : function(notif) {
