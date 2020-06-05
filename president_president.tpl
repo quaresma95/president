@@ -10,6 +10,9 @@
             {PLAYER_NAME}
         </p>
         <div id="player_cards_{PLAYER_ID}" class="card_places">
+            <div class="cardIcon" id="playerCardCount_p{PLAYER_ID}" style="width: 30px; right:43%; bottom:30%;"></div>
+            <div class="cardIcon" id="playerIsPlaying_p{PLAYER_ID}" style="width: 20px; height: 21px; right:17%; bottom:30%; padding: 0px;"></div>
+            <div class="cardIcon" id="playerCardRole_p{PLAYER_ID}" style="right:30%; bottom:0%;"></div>
         </div>
     </div>
     <!-- END player -->
@@ -31,8 +34,9 @@
     // Javascript HTML templates
     var jstpl_plays = '<div class="cardsOnTable" id="play_${play_id}"></div>';
     var jstpl_cardontable = '<div class="cardOnTable" id="cardontable_${card_id}" style="background-position:-${x}px -${y}px; margin:${margin}"></div>';
-    var jstpl_counterHand = '<div class="cardIcon" id="playerCardCount_p${id}" style="width: 32px; right:29%; bottom:30%;">x ${nbCards}</div>';
-    var jstpl_role = '<div class="cardIcon" id="playerCardRole_p${id}" style="right:30%; bottom:0%;"><span style="margin-right: 0px;" class="${roleClass}"></span></div>';
+    var jstpl_counterHand = '<span>x ${nbCards}</span>';
+    var jstpl_isPlaying = '<span style="top:1px" class="${playingClass}"></span>';
+    var jstpl_role = '<span style="margin-right: 0px;" class="${roleClass}"></span>';
     var jstpl_player_board = '<div class="cards_board" id="cards_board_p${id}" style="padding: 3px">' +
     '<div class="icon16 icon16_hand cards_count"></div><span class="qIcon" id="card_count_p${id}">${count}</span>' +
     '<div id="playing_icon_p${id}" class="icon20 icon20_want_to_play qIcon playingClass ${playingClass}"></div>' +

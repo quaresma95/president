@@ -528,12 +528,14 @@ EOT;
         if ($skipped) {
             $players = self::loadPlayersBasicInfos();
             $next_player_id = $this->getNextActivePlayer();
-            // skip next player
-            $this->gamestate->nextState('nextPlayer');
-            self::notifyAllPlayers('playerSkipped', clienttranslate('${player_name} skip ${player_name_skipped}'), [
-                'player_name' => self::getActivePlayerName(),
-                'player_name_skipped' => $players[ $next_player_id ]['player_name']
-            ]);
+            if ($next_player_id != $player_id) {
+                self::notifyAllPlayers('playerSkipped', clienttranslate('${player_name} skip ${player_name_skipped}'), [
+                    'player_name' => self::getActivePlayerName(),
+                    'player_name_skipped' => $players[ $next_player_id ]['player_name']
+                ]);
+                // skip next player
+                $this->gamestate->nextState('nextPlayer');
+            }
         }
 
         // Next player

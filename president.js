@@ -112,8 +112,7 @@ function (dojo, declare) {
             switch( stateName )
             {
                 case 'newRound':
-                    this.setupPlayersBoard();
-                    dojo.query('.cardOnTable').remove();
+                    this.resetRound();
                     break;
                 case 'dummmy':
                     break;
@@ -152,6 +151,31 @@ function (dojo, declare) {
         ///////////////////////////////////////////////////
         //// Utility methods
 
+        resetRound: function () {
+            // clean table
+            dojo.query('.cardOnTable').remove();
+
+            // reset players status
+            dojo.query( '.cards_board').remove();
+            var iconsPerRole = this.gamedatas.icons_per_position[this.gamedatas.nb_players];
+            for ( var i in this.gamedatas.nb_cards) {
+                var nbCards = this.gamedatas.nb_cards[i].nb_cards;
+                var player = this.gamedatas.players[i];
+
+                dojo.place(this.format_block('jstpl_isPlaying', {
+                    playingClass : nbCards > 0 ? 'icon20 icon20_want_to_play' : 'icon20 icon20_know_game',
+                }), $('playerIsPlaying_p'+i), 'only');
+                
+                dojo.place( this.format_block('jstpl_player_board', {
+                    id : i,
+                    count : nbCards,
+                    playingClass : player.pass == '0' && nbCards > 0 ? '' : 'qHidden',
+                    passClass : player.pass == '0' || nbCards == 0 ? 'qHidden' : '',
+                    roleClass : player.role == '0' ? 'qHidden' : iconsPerRole[player.role]
+                }), $('player_board_'+i) );
+            }
+        },
+
         setupToolTips: function () {
             this.addTooltipToClass( 'cards_count', '', _('Number of cards in hand'), '' );
             this.addTooltipToClass( 'revolution', '', _('Revolution the cards order are reversed'), '' );
@@ -173,11 +197,13 @@ function (dojo, declare) {
             this.gamedatas.nb_cards[player_id].nb_cards -= cards_played;
             var nbCards = this.gamedatas.nb_cards[player_id].nb_cards;
 
-            dojo.place(this.format_block('jstpl_counterHand', {
-                id : player_id,
-                nbCards : nbCards,
-            }), $('playerCardCount_p'+player_id), 'replace');
+            dojo.place(this.format_block('jstpl_isPlaying', {
+                playingClass : notif.type == 'passTurn' ? 'icon20 icon20_know_game' : 'icon20 icon20_want_to_play',
+            }), $('playerIsPlaying_p'+player_id), 'only');
 
+            dojo.place(this.format_block('jstpl_counterHand', {
+                nbCards : nbCards,
+            }), $('playerCardCount_p'+player_id), 'only');
 
             dojo.place( this.format_block('jstpl_player_board', {
                 id : player_id,
@@ -197,21 +223,23 @@ function (dojo, declare) {
                 var nbCards = this.gamedatas.nb_cards[i].nb_cards;
                 var player = this.gamedatas.players[i];
 
+                dojo.place(this.format_block('jstpl_isPlaying', {
+                    playingClass : player.pass == '0' && nbCards > 0 ? 'icon20 icon20_want_to_play' : 'icon20 icon20_know_game',
+                }), $('playerIsPlaying_p'+i));
+
                 dojo.place(this.format_block('jstpl_counterHand', {
-                    id : i,
                     nbCards : nbCards,
-                }), $('player_cards_'+i));
+                }), $('playerCardCount_p'+i));
 
                 if (player.role != '0') {
                     dojo.place(this.format_block('jstpl_role', {
-                        id : i,
                         roleClass : iconsPerRole[player.role]
-                    }), $('player_cards_'+i));
+                    }), $('playerCardRole_p'+i));
                 }
 
                 dojo.place( this.format_block('jstpl_player_board', {
                     id : i,
-                    count : this.gamedatas.nb_cards[i].nb_cards,
+                    count : nbCards,
                     playingClass : player.pass == '0' && nbCards > 0 ? '' : 'qHidden',
                     passClass : player.pass == '0' || nbCards == 0 ? 'qHidden' : '',
                     roleClass : player.role == '0' ? 'qHidden' : iconsPerRole[player.role]
@@ -481,15 +509,17 @@ function (dojo, declare) {
                     roleClass : iconRole
                 }), $('player_board_'+player_id) );
 
+                dojo.place(this.format_block('jstpl_isPlaying', {
+                    playingClass : nbCards > 0 ? 'icon20 icon20_want_to_play' : 'icon20 icon20_know_game',
+                }), $('playerIsPlaying_p'+player_id), 'only');
+
                 dojo.place(this.format_block('jstpl_counterHand', {
-                    id : player_id,
                     nbCards : nbCards,
-                }), $('playerCardCount_p'+player_id), 'replace');
+                }), $('playerCardCount_p'+player_id), 'only');
                 
                 dojo.place(this.format_block('jstpl_role', {
-                    id : player_id,
                     roleClass : iconRole
-                }), $('player_cards_'+player_id));
+                }), $('playerCardRole_p'+player_id), 'only');
             }
         },
 
