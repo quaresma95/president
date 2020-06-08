@@ -3,6 +3,7 @@
 
 <div id="player_table" class="player_table_{NB_PLAYER}">
     <div id="revolution_box" class="revolution qHidden"></div>
+    <div id="round_box" class="round_box">{ROUND} : <span id="round_count"></span></div>
 
     <!-- BEGIN player -->
     <div class="player_card card_place_{NB_PLAYER}_{PLACE_ID}">

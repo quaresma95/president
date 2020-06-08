@@ -46,6 +46,7 @@
             "NB_CARDS" => isset($nb_cards[$player_id]) ? isset($nb_cards[$player_id]) : 0,
             "NB_PLAYER" => $players_nbr,
             "PLACE_ID" => $i,
+            "ROUND" => self::_("Round"),
           ]);
           $i++;
         }

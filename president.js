@@ -165,7 +165,7 @@ function (dojo, declare) {
                 dojo.place(this.format_block('jstpl_isPlaying', {
                     playingClass : nbCards > 0 ? 'icon20 icon20_want_to_play' : 'icon20 icon20_know_game',
                 }), $('playerIsPlaying_p'+i), 'only');
-                
+
                 dojo.place( this.format_block('jstpl_player_board', {
                     id : i,
                     count : nbCards,
@@ -178,7 +178,7 @@ function (dojo, declare) {
 
         setupToolTips: function () {
             this.addTooltipToClass( 'cards_count', '', _('Number of cards in hand'), '' );
-            this.addTooltipToClass( 'revolution', '', _('Revolution the cards order are reversed'), '' );
+            this.addTooltipToClass( 'revolution', '', _('Revolution the ranking of cards are reversed'), '' );
             this.addTooltipToClass( 'passClass', '', _('This player are out of the round'), '' );
             this.addTooltipToClass( 'playingClass', '', _('This player is still playing'), '' );
             this.addTooltipToClass( 'iconPresident', '', _('At the beginning of each game the "president" will receive the 2 best cards of the "beggar" and must give 2 cards of his choice'));
@@ -245,6 +245,9 @@ function (dojo, declare) {
                     roleClass : player.role == '0' ? 'qHidden' : iconsPerRole[player.role]
                 }), $('player_board_'+i) );
             }
+
+            // init table round count
+            this.setupRoundCount();
         },
         // Get card unique identifier based on its color and value
         getCardUniqueId : function(color, value) {
@@ -276,6 +279,14 @@ function (dojo, declare) {
             }
 
             this.playerHand.changeItemsWeight(items_reversed);
+        },
+
+        setupRoundCount: function() {
+            var round = this.gamedatas.nb_round;
+            if (this.gamedatas.max_round) {
+                round = round + "/" + this.gamedatas.max_round;
+            }
+            $('round_count').innerHTML = round;
         },
 
         ///////////////////////////////////////////////////
@@ -465,6 +476,10 @@ function (dojo, declare) {
             // reset revolution state
             this.revolutionTrick = 0;
             dojo.addClass( 'revolution_box', 'qHidden' );
+
+            //increment round counter
+            this.gamedatas.nb_round++;
+            this.setupRoundCount();
 
             //clean table
             dojo.query('.cardOnTable').remove();

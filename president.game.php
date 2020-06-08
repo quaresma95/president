@@ -154,6 +154,11 @@ class President extends Table
 
         // Cards in player hand
         $result['nb_players'] = self::getGameStateValue('nbPlayers');
+        $result['nb_round'] = self::getStat('Hand_number');
+
+        if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
+            $result['max_round'] = $this->game_duration[$gameDurationOption]['max_round'];
+        }
 
         // Cards in player hand
         $sql = <<<EOT

@@ -23,6 +23,13 @@
     height: 70px;
 }
 
+#round_box {
+    position: absolute;
+    bottom: 0.5%;
+    right: 0.5%;
+    color: white;
+}
+
 .cardIcon {
     color: black;
     font-weight: bold;
