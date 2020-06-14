@@ -424,7 +424,6 @@ EOT;
         $this->gamestate->nextState('nextPlayer');
     }
 
-
     function checkRevolutionTrick($currentOrder, $player_id, $card_ids) 
     {
         if (count($card_ids) == 4) {
@@ -460,6 +459,12 @@ EOT;
                 'i18n' => ['role'],
             ]);
         }
+    }
+
+    function checkPlayerLeft() {
+        $nbPlayers = self::getGameStateValue('nbPlayers');
+        $finishOrder = self::getGameStateValue('finishOrder');
+        return $nbPlayers - $finishOrder;
     }
 
     function playCards($card_ids)
@@ -530,7 +535,7 @@ EOT;
         // check if player has finished
         $this->checkIfPlayerHasFinished($player_id);
 
-        if ($skipped) {
+        if ($skipped && $this->checkPlayerLeft() > 1) {
             $players = self::loadPlayersBasicInfos();
             $next_player_id = $this->getNextActivePlayer();
             if ($next_player_id != $player_id) {
