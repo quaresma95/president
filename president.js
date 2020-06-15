@@ -387,9 +387,11 @@ function (dojo, declare) {
                 ['-15px', '0px', '15px'],
                 ['-22px', '-7px', '8px', '23px'],
             ];
-            var margin = margins[items.length-1]
 
+            var margin = margins[items.length-1]
             var play_id = (Date.now().toString(36) + Math.random().toString(36).substr(2, 9));
+
+            $('tableCard').innerHTML = "";
             dojo.place(this.format_block('jstpl_plays', {
                 play_id : play_id
             }), 'tableCard');
