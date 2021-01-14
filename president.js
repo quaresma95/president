@@ -179,7 +179,7 @@ function (dojo, declare) {
         setupToolTips: function () {
             this.addTooltipToClass( 'cards_count', '', _('Number of cards in hand'), '' );
             this.addTooltipToClass( 'revolution', '', _('Revolution the ranking of cards are reversed'), '' );
-            this.addTooltipToClass( 'passClass', '', _('This player are out of the round'), '' );
+            this.addTooltipToClass( 'passClass', '', _('This player are out of the trick'), '' );
             this.addTooltipToClass( 'playingClass', '', _('This player is still playing'), '' );
             this.addTooltipToClass( 'iconPresident', '', _('At the beginning of each game the "president" will receive the 2 best cards of the "beggar" and must give 2 cards of his choice'));
             this.addTooltipToClass( 'iconPrimeMinister', '', _('At the beginning of each game the "prime minister" will receive the best card of the "peasant" and must give 1 card of his choice'));
@@ -263,22 +263,22 @@ function (dojo, declare) {
                 dojo.addClass( 'revolution_box', 'qHidden' );
             }
 
-            // revert cards order
-            var weight = 100;
-            var items_reversed = {};
-            var items = this.playerHand.getAllItems();
-
-            for ( var i in items) {
-                var color = Math.floor(items[i].type / 13) + 1;  
-                if (color == 5) {
-                    items_reversed[items[i].type] = 934;
-                } else {
-                    items_reversed[items[i].type] = weight;
-                    weight--;
-                }
-            }
-
-            this.playerHand.changeItemsWeight(items_reversed);
+            // // revert cards order
+            // var weight = 100;
+            // var items_reversed = {};
+            // var items = this.playerHand.getAllItems();
+            //
+            // for ( var i in items) {
+            //     var color = Math.floor(items[i].type / 13) + 1;
+            //     if (color == 5) {
+            //         items_reversed[items[i].type] = 934;
+            //     } else {
+            //         items_reversed[items[i].type] = weight;
+            //         weight--;
+            //     }
+            // }
+            //
+            // this.playerHand.changeItemsWeight(items_reversed);
         },
 
         setupRoundCount: function() {

@@ -18,10 +18,11 @@
         $allPlayers = $this->game->loadPlayersBasicInfos();
         $current_player_id = $g_user->get_id();
         $nb_cards = $this->game->cards->countCardsByLocationArgs('hand');
-        
+        $players_nbr = count( $allPlayers );
+
         if (array_key_exists ($current_player_id, $allPlayers)) {
           $players[$current_player_id] = $allPlayers[$current_player_id];
-          for ($i = 0 ; $i < 4; $i++) {
+          for ($i = 0 ; $i < $players_nbr; $i++) {
             $current_player_id = $this->game->getPlayerAfter( $current_player_id );
             $players[$current_player_id] = $allPlayers[$current_player_id];
           }
@@ -29,8 +30,6 @@
           $players = $allPlayers;
         }
 
-
-        $players_nbr = count( $players );
         /*********** Place your code below:  ************/
 
         $template = self::getGameName() . "_" . self::getGameName();

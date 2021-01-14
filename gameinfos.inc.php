@@ -118,7 +118,7 @@ $gameinfos = array(
 // A good length for this text is between 100 and 150 words (about 6 to 9 lines on a standard display)
 'presentation' => array(
     totranslate( "The goal of the President is to be the first to get rid off all of the cards in your hand." ),
-    totranslate( "Presient is played with a standard 52-card deck and 2 Jokers. Following this hierarchy (highest value to lowest) : J,2,A,K,Q,J,10,9,8,7,6,5,4,3." ),
+    totranslate( "President is played with a standard 52-card deck and 2 Jokers. Following this hierarchy (highest value to lowest) : J,2,A,K,Q,J,10,9,8,7,6,5,4,3." ),
     totranslate( "A player can play a single card or a set of cards of equal rank : " ),
     totranslate( "- Double – a pair of cards of the same value (ex. 2 Kings)." ),
     totranslate( "- Triple – three cards of the same value (ex. 3 fours)." ),

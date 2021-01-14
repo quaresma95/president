@@ -162,9 +162,9 @@ class President extends Table
 
         // Cards in player hand
         $sql = <<<EOT
-           SELECT `card_location_arg` id, 
-           ( SELECT count(*) FROM `card` WHERE `card_location` = 'hand' AND `card_location_arg` = id) as nb_cards
+           SELECT `card_location_arg`, count(*) as `nb_cards`
            FROM `card` 
+           WHERE `card_location` = 'hand' 
            GROUP by card_location_arg;
 EOT;
 
@@ -262,7 +262,7 @@ EOT;
         self::incStat(1, 'player_round_win', $best_value_player_id);
 
         $players = self::loadPlayersBasicInfos();
-        self::notifyAllPlayers( 'roundWin', clienttranslate('${player_name} wins the round'), [
+        self::notifyAllPlayers( 'roundWin', clienttranslate('${player_name} wins the trick'), [
             'player_id' => $best_value_player_id,
             'player_name' => $players[ $best_value_player_id ]['player_name']
         ]);
