@@ -585,7 +585,7 @@ function (dojo, declare) {
             // Move all cards on table to given table, then destroy them
             var winner_id = notif.args.player_id;
             for ( var player_id in this.gamedatas.players) {
-                var anim = this.slideToObject('cardontable_' + player_id, 'overall_player_board_' + winner_id);
+                var anim = this.slideToObject('cardontable_' + player_id, 'player_board_' + winner_id);
                 dojo.connect(anim, 'onEnd', function(node) {
                     dojo.destroy(node);
                 });
