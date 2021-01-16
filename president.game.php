@@ -5,7 +5,7 @@
 
 require_once( APP_GAMEMODULE_PATH.'module/table/table.game.php' );
 
-class GameState {
+class PresidentGameState {
     public const numPlayers = "nbPlayers";
     public const isFirstRound = "firstRound";
     public const finishOrder = "finishOrder";
@@ -32,16 +32,16 @@ class President extends Table
         parent::__construct();
         
         self::initGameStateLabels([
-            GameState::numPlayers => 10,
-            GameState::isFirstRound => 11,
-            GameState::finishOrder => 12,
-            GameState::defaultScore => 13,
-            GameState::lastCardValue => 14,
-            GameState::isRevolutionTrick => 15,
-            GameState::currentHandType => 16,
-            GameState::lastPlayerPlayedId => 17,
-            GameState::presidentSwapCards => 18,
-            GameState::gameDuration => 100, // Is 100 allowed!?
+            PresidentGameState::numPlayers => 10,
+            PresidentGameState::isFirstRound => 11,
+            PresidentGameState::finishOrder => 12,
+            PresidentGameState::defaultScore => 13,
+            PresidentGameState::lastCardValue => 14,
+            PresidentGameState::isRevolutionTrick => 15,
+            PresidentGameState::currentHandType => 16,
+            PresidentGameState::lastPlayerPlayedId => 17,
+            PresidentGameState::presidentSwapCards => 18,
+            PresidentGameState::gameDuration => 100, // Is 100 allowed!?
         ]);
 
         $this->cards = self::getNew( "module.common.deck" );
@@ -69,24 +69,24 @@ class President extends Table
         $gameinfos = self::getGameinfos();
         $default_colors = $gameinfos['player_colors'];
 
-        self::setGameStateInitialValue(GameState::isFirstRound, 1);
-        self::setGameStateInitialValue(GameState::finishOrder, 0);
-        self::setGameStateInitialValue(GameState::defaultScore, 50);
-        self::setGameStateInitialValue(GameState::lastCardValue, 0);
-        self::setGameStateInitialValue(GameState::currentHandType, 0);
-        self::setGameStateInitialValue(GameState::isRevolutionTrick, 0);
-        self::setGameStateInitialValue(GameState::lastPlayerPlayedId, 0);
-        self::setGameStateInitialValue(GameState::presidentSwapCards, 0);
-        self::setGameStateInitialValue(GameState::numPlayers, count($players));
+        self::setGameStateInitialValue(PresidentGameState::isFirstRound, 1);
+        self::setGameStateInitialValue(PresidentGameState::finishOrder, 0);
+        self::setGameStateInitialValue(PresidentGameState::defaultScore, 50);
+        self::setGameStateInitialValue(PresidentGameState::lastCardValue, 0);
+        self::setGameStateInitialValue(PresidentGameState::currentHandType, 0);
+        self::setGameStateInitialValue(PresidentGameState::isRevolutionTrick, 0);
+        self::setGameStateInitialValue(PresidentGameState::lastPlayerPlayedId, 0);
+        self::setGameStateInitialValue(PresidentGameState::presidentSwapCards, 0);
+        self::setGameStateInitialValue(PresidentGameState::numPlayers, count($players));
 
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
 
         $gameDurationOption = $this->gamestate->table_globals[100];
-        self::setGameStateValue(GameState::defaultScore, $this->game_duration[$gameDurationOption]['default_score']);
+        self::setGameStateValue(PresidentGameState::defaultScore, $this->game_duration[$gameDurationOption]['default_score']);
 
         $values = [];
-        $default_score = self::getGameStateValue(GameState::defaultScore);
+        $default_score = self::getGameStateValue(PresidentGameState::defaultScore);
 
         foreach( $players as $player_id => $player )
         {
@@ -163,11 +163,11 @@ class President extends Table
         $sql = "SELECT player_id id, player_score score, player_has_passed pass, player_role role FROM player";
         $result['players'] = self::getCollectionFromDb( $sql );
 
-        $result['currentHandType'] = self::getGameStateValue(GameState::currentHandType);
-        $result['currentOrder'] = self::getGameStateValue(GameState::isRevolutionTrick);
+        $result['currentHandType'] = self::getGameStateValue(PresidentGameState::currentHandType);
+        $result['currentOrder'] = self::getGameStateValue(PresidentGameState::isRevolutionTrick);
 
         // Cards in player hand
-        $result['nb_players'] = self::getGameStateValue(GameState::numPlayers);
+        $result['nb_players'] = self::getGameStateValue(PresidentGameState::numPlayers);
         $result['nb_round'] = self::getStat('Hand_number'); // Counds like an anti-pattern to use stat as game data
 
         if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
@@ -230,7 +230,7 @@ EOT;
                 }
                 $progression = $actual_round * 10;
             } else {
-                $default_score = self::getGameStateValue(GameState::defaultScore);
+                $default_score = self::getGameStateValue(PresidentGameState::defaultScore);
                 $minScore = self::getUniqueValueFromDB( "SELECT MIN(player_score) as min FROM player" );
                 if ($minScore == $default_score) {
                     $progression = 0;
@@ -253,7 +253,7 @@ EOT;
 //////////// Utility functions
 ////////////    
     private function setUpNewRound() {
-        $best_value_player_id = self::getGameStateValue(GameState::lastPlayerPlayedId);
+        $best_value_player_id = self::getGameStateValue(PresidentGameState::lastPlayerPlayedId);
         // Active this player => he's the one who starts the next trick
 
 
@@ -261,9 +261,9 @@ EOT;
         $this->cards->moveAllCardsInLocation('cardsontable', 'cardswon', null, $best_value_player_id);
 
         // Reset global before new round
-        self::setGameStateValue(GameState::lastCardValue, 0);
-        self::setGameStateValue(GameState::currentHandType, 0);
-        self::setGameStateValue(GameState::lastPlayerPlayedId, 0);
+        self::setGameStateValue(PresidentGameState::lastCardValue, 0);
+        self::setGameStateValue(PresidentGameState::currentHandType, 0);
+        self::setGameStateValue(PresidentGameState::lastPlayerPlayedId, 0);
 
         $sql = "UPDATE player SET player_has_passed='0'";
         self::DbQuery( $sql );
@@ -287,7 +287,7 @@ EOT;
         $nextActivePlayerId = "";
         $playerId = self::getActivePlayerId();
         $tableOrder = self::getNextPlayerTable();
-        $nbPlayers = self::getGameStateValue(GameState::numPlayers);
+        $nbPlayers = self::getGameStateValue(PresidentGameState::numPlayers);
         $players = self::getCollectionFromDb( "SELECT player_id id, player_has_passed pass, player_role role FROM player" );
 
 
@@ -301,7 +301,7 @@ EOT;
         }
 
         if (empty($nextActivePlayerId)) {
-            $nextActivePlayerId = self::getGameStateValue(GameState::lastPlayerPlayedId);
+            $nextActivePlayerId = self::getGameStateValue(PresidentGameState::lastPlayerPlayedId);
         }
 
         return $nextActivePlayerId;
@@ -310,9 +310,9 @@ EOT;
     private function checkHand($cards) {
         $error = false;
         $gameOptions = $this->gamestate->table_globals[101];
-        $lastCardValue = self::getGameStateValue(GameState::lastCardValue);
-        $currentHandType = self::getGameStateValue(GameState::currentHandType);
-        $currentOrder = self::getGameStateValue(GameState::isRevolutionTrick);
+        $lastCardValue = self::getGameStateValue(PresidentGameState::lastCardValue);
+        $currentHandType = self::getGameStateValue(PresidentGameState::currentHandType);
+        $currentOrder = self::getGameStateValue(PresidentGameState::isRevolutionTrick);
         $best_card_current_hand = $currentOrder == 0 ? 15 : 3;
 
         if (empty($cards)) {
@@ -416,7 +416,7 @@ EOT;
     {
         self::checkAction("passTurn");
 
-        if (self::getGameStateValue(GameState::currentHandType) == 0) {
+        if (self::getGameStateValue(PresidentGameState::currentHandType) == 0) {
             throw new BgaUserException( self::_("You must play") );
             $this->gamestate->nextState('');
             return;
@@ -442,7 +442,7 @@ EOT;
     {
         if (count($card_ids) == 4) {
             //notif revolution
-            self::setGameStateValue(GameState::isRevolutionTrick, ($currentOrder == 0 ? 1 : 0));
+            self::setGameStateValue(PresidentGameState::isRevolutionTrick, ($currentOrder == 0 ? 1 : 0));
 
             //add stat revolution
             self::incStat(1, 'player_revolution', $player_id);
@@ -457,7 +457,7 @@ EOT;
     function checkIfPlayerHasFinished($player_id) 
     {
         if (empty($this->cards->getPlayerHand($player_id))) {
-            $position = self::incGameStateValue( GameState::finishOrder, 1);
+            $position = self::incGameStateValue( PresidentGameState::finishOrder, 1);
             if ($position == 1) {
                 // add stat president
                 self::incStat(1, 'player_president_stat', $player_id);
@@ -465,7 +465,7 @@ EOT;
             $sql = "UPDATE player SET player_role='$position' WHERE player_id='$player_id'";
             self::DbQuery( $sql );
 
-            $role = $this->players_roles[self::getGameStateValue(GameState::numPlayers)][$position];
+            $role = $this->players_roles[self::getGameStateValue(PresidentGameState::numPlayers)][$position];
             self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} becomes ${role}'), [
                 'role' => $role,
                 'role_position' => $position,
@@ -476,8 +476,8 @@ EOT;
     }
 
     function checkPlayerLeft() {
-        $nbPlayers = self::getGameStateValue(GameState::numPlayers);
-        $finishOrder = self::getGameStateValue(GameState::finishOrder);
+        $nbPlayers = self::getGameStateValue(PresidentGameState::numPlayers);
+        $finishOrder = self::getGameStateValue(PresidentGameState::finishOrder);
         return $nbPlayers - $finishOrder;
     }
 
@@ -489,9 +489,9 @@ EOT;
         $currentCard = null;
         $nb_cards = count($card_ids);
         $player_id = self::getActivePlayerId();
-        $lastCardValue = self::getGameStateValue(GameState::lastCardValue);
-        $currentHandType = self::getGameStateValue(GameState::currentHandType);
-        $currentOrder = self::getGameStateValue(GameState::isRevolutionTrick);
+        $lastCardValue = self::getGameStateValue(PresidentGameState::lastCardValue);
+        $currentHandType = self::getGameStateValue(PresidentGameState::currentHandType);
+        $currentOrder = self::getGameStateValue(PresidentGameState::isRevolutionTrick);
         $best_card_current_hand = $currentOrder == 0 ? 15 : 3;
         $gameOptions = $this->gamestate->table_globals[101];
 
@@ -502,7 +502,7 @@ EOT;
         }
 
         if( $currentHandType == 0) {
-            self::setGameStateValue(GameState::currentHandType, $nb_cards);
+            self::setGameStateValue(PresidentGameState::currentHandType, $nb_cards);
         } elseif ($error = $this->checkHand($cards)) {
             if ($currentOrder == 0) {
                 if ($gameOptions == 1 && $best_card_current_hand != $currentCard['type_arg']) {
@@ -530,8 +530,8 @@ EOT;
         // check revolution
         $this->checkRevolutionTrick($currentOrder, $player_id, $card_ids);
         $this->cards->moveCards($card_ids, 'cardsontable', $player_id);
-        self::setGameStateValue(GameState::lastCardValue, $currentCard['type_arg']);
-        self::setGameStateValue(GameState::lastPlayerPlayedId, $player_id);
+        self::setGameStateValue(PresidentGameState::lastCardValue, $currentCard['type_arg']);
+        self::setGameStateValue(PresidentGameState::lastPlayerPlayedId, $player_id);
 
         // And notify
         self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays a ${nb_cards} ${value_displayed}'), [
@@ -572,7 +572,7 @@ EOT;
         $msg_error = "";
         $nb_cards = count($card_ids);
         $player_id = self::getActivePlayerId();
-        $nbPlayers = self::getGameStateValue(GameState::numPlayers);
+        $nbPlayers = self::getGameStateValue(PresidentGameState::numPlayers);
 
         $sql = "SELECT player_role role, player_id id FROM player ORDER BY role ASC";
         $players_by_position = self::getCollectionFromDb( $sql , true );
@@ -596,7 +596,7 @@ EOT;
         }
 
         //SWAP
-        if (self::getGameStateValue(GameState::presidentSwapCards) == 0) {
+        if (self::getGameStateValue(PresidentGameState::presidentSwapCards) == 0) {
             $beggarId = $players_by_position[$nbPlayers];
             $cardsForPresident = self::getBestCardsByLocation($beggarId, 2);
             $cardsForBeggar = $this->cards->getCards($card_ids);
@@ -615,7 +615,7 @@ EOT;
                 'cardsSent' => $cardsForPresident
             ]);
 
-            self::setGameStateValue(GameState::presidentSwapCards, 1);
+            self::setGameStateValue(PresidentGameState::presidentSwapCards, 1);
             $this->gamestate->nextState('endPresidentSwap');
         } else {
             // Next player
@@ -637,7 +637,7 @@ EOT;
                 'cardsSent' => $cardsForPrimeMinister
             ]);
 
-            self::setGameStateValue(GameState::presidentSwapCards, 0);
+            self::setGameStateValue(PresidentGameState::presidentSwapCards, 0);
             $this->gamestate->nextState('endPrimeMinisterSwapTurn');
         }
     }
@@ -671,9 +671,9 @@ EOT;
     {
         $next_player_id = "";
         $activePlayer = self::getActivePlayerId();
-        $nb_payers = self::getGameStateValue(GameState::numPlayers);
-        $firstRound = self::getGameStateValue(GameState::isFirstRound);
-        self::setGameStateValue(GameState::isRevolutionTrick, 0);
+        $nb_payers = self::getGameStateValue(PresidentGameState::numPlayers);
+        $firstRound = self::getGameStateValue(PresidentGameState::isFirstRound);
+        self::setGameStateValue(PresidentGameState::isRevolutionTrick, 0);
 
         // add stat new hand
         self::incStat(1, 'Hand_number');
@@ -727,9 +727,9 @@ EOT;
     function stNextPlayer()
     {
         $next_player_id = $this->getNextActivePlayer();
-        $last_card = self::getGameStateValue(GameState::lastCardValue);
-        $last_player_played = self::getGameStateValue(GameState::lastPlayerPlayedId);
-        $best_card_current_hand = self::getGameStateValue(GameState::isRevolutionTrick) == 0 ? 15 : 3;
+        $last_card = self::getGameStateValue(PresidentGameState::lastCardValue);
+        $last_player_played = self::getGameStateValue(PresidentGameState::lastPlayerPlayedId);
+        $best_card_current_hand = self::getGameStateValue(PresidentGameState::isRevolutionTrick) == 0 ? 15 : 3;
 
         if ($this->checkEndGame()) {
             // End of the game
@@ -755,8 +755,8 @@ EOT;
     function stEndHand() {
         // Count and score points, then end the game or go to the next hand.
         $cards = $this->cards->getCardsInLocation( 'hand');
-        $position = self::incGameStateValue(GameState::finishOrder, 1);
-        $nbPlayers = self::getGameStateValue(GameState::numPlayers);
+        $position = self::incGameStateValue(PresidentGameState::finishOrder, 1);
+        $nbPlayers = self::getGameStateValue(PresidentGameState::numPlayers);
         $players = self::loadPlayersBasicInfos();
         $card = current($cards);
         $lastPlayer = $players[$card['location_arg']];
@@ -779,8 +779,8 @@ EOT;
         ]);
 
         $this->gamestate->changeActivePlayer( $lastPlayer['player_id'] );
-        self::setGameStateValue(GameState::finishOrder, 0);
-        self::setGameStateValue(GameState::isFirstRound, 0);
+        self::setGameStateValue(PresidentGameState::finishOrder, 0);
+        self::setGameStateValue(PresidentGameState::isFirstRound, 0);
 
         // Apply scores to player
         foreach ( $players as $player_id => $player ) {
@@ -829,11 +829,11 @@ EOT;
         $sql = "SELECT player_role role, player_id id FROM player ORDER BY role ASC";
         $players_by_position = self::getCollectionFromDb( $sql , true );
 
-        if (self::getGameStateValue(GameState::presidentSwapCards) == 1) {
+        if (self::getGameStateValue(PresidentGameState::presidentSwapCards) == 1) {
             $this->gamestate->changeActivePlayer( $players_by_position[2] );
             $this->gamestate->nextState('primeMinisterSwapTurn');
         } else {
-            $this->gamestate->changeActivePlayer( $players_by_position[self::getGameStateValue(GameState::numPlayers)] );
+            $this->gamestate->changeActivePlayer( $players_by_position[self::getGameStateValue(PresidentGameState::numPlayers)] );
             $this->gamestate->nextState('playerTurn');
         }
     }
@@ -892,9 +892,9 @@ EOT;
                 case 'playerTurn':
                     $cardsIds = [];
                     $lastCardValue = '';
-                    $lastCardPlayed = self::getGameStateValue(GameState::lastCardValue);
-                    $currentHandType = self::getGameStateValue(GameState::currentHandType);
-                    $revolutionTrick = self::getGameStateValue(GameState::isRevolutionTrick);
+                    $lastCardPlayed = self::getGameStateValue(PresidentGameState::lastCardValue);
+                    $currentHandType = self::getGameStateValue(PresidentGameState::currentHandType);
+                    $revolutionTrick = self::getGameStateValue(PresidentGameState::isRevolutionTrick);
 
                     if ($revolutionTrick == 0) {
                         $cards = $this->getCardsByLocationOrderedByValue( $active_player, 20);
