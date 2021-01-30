@@ -27,6 +27,19 @@ $game_options = [
                 'description' => totranslate('When a player plays the same number of cards of the same rank as the previous player skips the next person who would have played (excluding the best card 2 or 3 in case of revolution and jokers).')
             ]
         ]
+    ],
+    102 => [
+        'name' => totranslate('Revolution'),
+        'values' => [
+            0 => [
+                'name' => totranslate('Off'),
+                'description' => totranslate('Playing 4 cards will not trigger (or cancel) Revolution.')
+            ],
+            1 => [
+                'name' => totranslate('On'),
+                'description' => totranslate('When a player plays 4 identical cards, Revolution is triggered and the value-order of all cards (except Jokers) is reversed - until another player plays 4 cards.')
+            ]
+        ]
     ]
 ];
 

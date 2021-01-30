@@ -440,7 +440,8 @@ EOT;
 
     function checkRevolutionTrick($currentOrder, $player_id, $card_ids) 
     {
-        if (count($card_ids) == 4) {
+        $optionRevolutionEnabled = $this->gamestate->table_globals[102] == 1 ? True : False;
+        if ($optionRevolutionEnabled && count($card_ids) == 4) {
             //notif revolution
             self::setGameStateValue(GS::isRevolutionTrick, ($currentOrder == 0 ? 1 : 0));
 
