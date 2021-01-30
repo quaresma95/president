@@ -16,6 +16,14 @@ class GS {
     public const lastPlayerPlayedId = "lastPlayerPlayedId";
     public const presidentSwapCards = "presidentSwapCards";
     public const gameDuration = "gameDuration";
+    public const optSkipOn = "optSkipOn";
+    public const optRevolutionOn = "optRevolutionOn";
+}
+
+class Opt {
+    public const gameDuration = 100;
+    public const skipOn = 101;
+    public const revolutionOn = 102;
 }
 
 class President extends Table
@@ -41,7 +49,9 @@ class President extends Table
             GS::currentHandType => 16,
             GS::lastPlayerPlayedId => 17,
             GS::presidentSwapCards => 18,
-            GS::gameDuration => 100, // Is 100 allowed!?
+            GS::gameDuration => Opt::gameDuration,
+            GS::optSkipOn => Opt::skipOn,
+            GS::optRevolutionOn => Opt::revolutionOn,
         ]);
 
         $this->cards = self::getNew( "module.common.deck" );
@@ -82,7 +92,7 @@ class President extends Table
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
 
-        $gameDurationOption = $this->gamestate->table_globals[100];
+        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
         self::setGameStateValue(GS::defaultScore, $this->game_duration[$gameDurationOption]['default_score']);
 
         $values = [];
@@ -154,7 +164,7 @@ class President extends Table
     {
         $result = [];
     
-        $gameDurationOption = $this->gamestate->table_globals[100];
+        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
         
         $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
     
@@ -221,7 +231,7 @@ EOT;
         if( $state['name'] == 'gameEnd' ) {
             $progression = 100;
         } else {
-            $gameDurationOption = $this->gamestate->table_globals[100];
+            $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
             if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
                 $actual_round = self::getStat('Hand_number') - 1;
                 $max_round = $this->game_duration[$gameDurationOption]['max_round'];
@@ -309,7 +319,7 @@ EOT;
 
     private function checkHand($cards) {
         $error = false;
-        $optionSkipEnabled = $this->gamestate->table_globals[101] == 1 ? True : False;
+        $optionSkipEnabled = $this->gamestate->table_globals[Opt::skipOn] == 1 ? True : False;
         $lastCardValue = self::getGameStateValue(GS::lastCardValue);
         $currentHandType = self::getGameStateValue(GS::currentHandType);
         $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
@@ -440,7 +450,7 @@ EOT;
 
     function checkRevolutionTrick($currentOrder, $player_id, $card_ids) 
     {
-        $optionRevolutionEnabled = $this->gamestate->table_globals[102] == 1 ? True : False;
+        $optionRevolutionEnabled = $this->gamestate->table_globals[Opt::revolutionOn] == 1 ? True : False;
         if ($optionRevolutionEnabled && count($card_ids) == 4) {
             //notif revolution
             self::setGameStateValue(GS::isRevolutionTrick, ($currentOrder == 0 ? 1 : 0));
@@ -494,7 +504,7 @@ EOT;
         $currentHandType = self::getGameStateValue(GS::currentHandType);
         $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
         $best_card_current_hand = $currentOrder == 0 ? 15 : 3;
-        $optionSkipEnabled = $this->gamestate->table_globals[101] == 1 ? True : False;
+        $optionSkipEnabled = $this->gamestate->table_globals[Opt::skipOn] == 1 ? True : False;
 
         foreach ($card_ids as $card_id) {
             $currentCard = $this->cards->getCard($card_id);
@@ -815,7 +825,7 @@ EOT;
         }
 
         ///// Test if this is the end of the game by round
-        $gameDurationOption = $this->gamestate->table_globals[100];
+        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
         if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
             if ($this->game_duration[$gameDurationOption]['max_round'] == self::getStat('Hand_number')) {
                 $this->gamestate->nextState("endGame");
