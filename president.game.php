@@ -157,6 +157,26 @@ class President extends Table
         /************ End of the game initialization *****/
     }
 
+    protected function getCards_3to2_joker()
+    {
+        $cards = [];
+        foreach ( $this->colors as $color_id => $color ) {
+            // spade, heart, diamond, club
+            for ($value = 3; $value <= 15; $value ++) {
+                //  2, 3, 4, ... K, A
+                $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
+            }
+        }
+
+        foreach ($this->special_cards as $special_card) {
+            $cards [] = [
+                'type' => $special_card['type'],
+                'type_arg' => $special_card['value'],
+                'nbr' => $special_card['nbr']
+            ];
+        return $cards;
+    }
+
     /*
         getAllDatas: 
         

@@ -34,6 +34,7 @@ $this->special_cards = [
 
 
 $this->values_label = [
+    2 => '2',
     3 => '3',
     4 => '4',
     5 => '5',
