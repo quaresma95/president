@@ -309,7 +309,7 @@ EOT;
 
     private function checkHand($cards) {
         $error = false;
-        $gameOptions = $this->gamestate->table_globals[101];
+        $optionSkipEnabled = $this->gamestate->table_globals[101] == 1 ? True : False;
         $lastCardValue = self::getGameStateValue(GS::lastCardValue);
         $currentHandType = self::getGameStateValue(GS::currentHandType);
         $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
@@ -329,7 +329,7 @@ EOT;
                     if ($lastCardValue > $card['type_arg']) {
                         $error = true;
                     } else if ($lastCardValue == $card['type_arg']) {
-                        if (($gameOptions == 1 && in_array($card['type_arg'], [933, 934, $best_card_current_hand])) || $gameOptions == 0) {
+                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $best_card_current_hand])) || !$optionSkipEnabled) {
                             $error = true;
                         }
                     }
@@ -337,7 +337,7 @@ EOT;
                     if ($lastCardValue < $card['type_arg'] && !in_array($card['type_arg'], [933, 934])) {
                         $error = true;
                     } else if ($lastCardValue == $card['type_arg']) {
-                        if (($gameOptions == 1 && in_array($card['type_arg'], [933, 934, $best_card_current_hand])) || $gameOptions == 0) {
+                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $best_card_current_hand])) || !$optionSkipEnabled) {
                             $error = true;
                         }
                     }
@@ -493,7 +493,7 @@ EOT;
         $currentHandType = self::getGameStateValue(GS::currentHandType);
         $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
         $best_card_current_hand = $currentOrder == 0 ? 15 : 3;
-        $gameOptions = $this->gamestate->table_globals[101];
+        $optionSkipEnabled = $this->gamestate->table_globals[101] == 1 ? True : False;
 
         foreach ($card_ids as $card_id) {
             $currentCard = $this->cards->getCard($card_id);
@@ -505,13 +505,13 @@ EOT;
             self::setGameStateValue(GS::currentHandType, $nb_cards);
         } elseif ($error = $this->checkHand($cards)) {
             if ($currentOrder == 0) {
-                if ($gameOptions == 1 && $best_card_current_hand != $currentCard['type_arg']) {
+                if ($optionSkipEnabled && $best_card_current_hand != $currentCard['type_arg']) {
                     throw new BgaUserException( self::_("You must play card(s) stronger or equal than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
                 } else {
                     throw new BgaUserException( self::_("You must play card(s) stronger than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
                 }
             } else {
-                if ($gameOptions == 1 && $best_card_current_hand != $currentCard['type_arg']) {
+                if ($optionSkipEnabled && $best_card_current_hand != $currentCard['type_arg']) {
                     throw new BgaUserException( self::_("You must play card(s) weaker or equal than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
                 } else {
                     throw new BgaUserException( self::_("You must play card(s) weaker than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );  
@@ -523,7 +523,7 @@ EOT;
         }
 
         // check skip option
-        if ($currentCard['type_arg'] == $lastCardValue && $gameOptions == 1) {
+        if ($currentCard['type_arg'] == $lastCardValue && $optionSkipEnabled) {
             $skipped = 1;
         }
          
