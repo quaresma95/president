@@ -23,6 +23,7 @@ class GS {
     public const optJokersOn = "optJokersOn";
     public const optMaxCardsPerPlayerHand = "optMaxCardsPerPlayerHand";
     public const optHighestCard = "optHighestCard";
+    public const optPassForTrick = "optPassForTrick";
 }
 
 class Opt {
@@ -32,6 +33,7 @@ class Opt {
     public const jokersOn = 103;
     public const maxCardsPerPlayerHand = 104;
     public const highestCard = 105;
+    public const passForTrick = 106;
 }
 
 class President extends Table
@@ -64,6 +66,7 @@ class President extends Table
             GS::optJokersOn => Opt::jokersOn,
             GS::optMaxCardsPerPlayerHand => Opt::maxCardsPerPlayerHand,
             GS::optHighestCard => Opt::highestCard,
+            GS::optPassForTrick => Opt::passForTrick,
         ]);
 
         $this->cards = self::getNew( "module.common.deck" );
@@ -318,6 +321,7 @@ EOT;
         self::setGameStateValue(GS::currentHandType, 0);
         self::setGameStateValue(GS::lastPlayerPlayedId, 0);
 
+        // Reset the 'pass' flag on all players
         $sql = "UPDATE player SET player_has_passed='0'";
         self::DbQuery( $sql );
 
@@ -464,8 +468,9 @@ EOT;
 //////////// Player actions
 //////////// 
 
-    function passTurn() 
+    function passTrick() 
     {
+        //self::checkAction("passTrick");
         self::checkAction("passTurn");
 
         if (self::getGameStateValue(GS::currentHandType) == 0) {
@@ -475,7 +480,7 @@ EOT;
         }
 
         $player_id = self::getActivePlayerId();
-        self::notifyAllPlayers('passTurn', clienttranslate('${player_name} pass'), [
+        self::notifyAllPlayers('passTurn', clienttranslate('${player_name} folds'), [
             'player_name' => self::getActivePlayerName(),
             'player_id' => $player_id,
         ]);
@@ -485,6 +490,36 @@ EOT;
 
         $sql = "UPDATE player SET player_has_passed='1' WHERE player_id='$player_id'";
         self::DbQuery( $sql );
+
+        // Next player
+        $this->gamestate->nextState('nextPlayer');
+    }
+
+    function passTurn() 
+    {
+        $optionPassEntireTrick = $this->gamestate->table_globals[Opt::passForTrick] == 1 ? True : False;
+        if ($optionPassEntireTrick) {
+            $this->passTrick();
+        } else {
+           $this->passOneTurn();
+        }
+
+        self::checkAction("passTurn");
+
+        if (self::getGameStateValue(GS::currentHandType) == 0) {
+            throw new BgaUserException( self::_("You must play") );
+            $this->gamestate->nextState('');
+            return;
+        }
+
+        $player_id = self::getActivePlayerId();
+        self::notifyAllPlayers('passOneTurn', clienttranslate('${player_name} passes'), [
+            'player_name' => self::getActivePlayerName(),
+            'player_id' => $player_id,
+        ]);
+
+        // add stat player passes
+        self::incStat(1, 'player_pass_turn', $player_id);
 
         // Next player
         $this->gamestate->nextState('nextPlayer');

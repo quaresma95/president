@@ -475,6 +475,7 @@ function (dojo, declare) {
             dojo.subscribe('newHand', this, "notif_newHand");
             dojo.subscribe('playCard', this, "notif_playCard");
             dojo.subscribe('passTurn', this, "notif_passTurn");
+            dojo.subscribe('passOneTurn', this, "notif_passOneTurn");
             dojo.subscribe('swapCards', this, "notif_swapCards");
             dojo.subscribe('resetCounters', this, "notif_resetCounters");
             dojo.subscribe('revolutionTrick', this, "notif_revolution");
@@ -557,6 +558,11 @@ function (dojo, declare) {
         },
 
         notif_passTurn : function(notif) {
+            // player pass is turn
+            this.updatePlayersBoard(notif);
+        },
+
+        notif_passOneTurn : function(notif) {
             // player pass is turn
             this.updatePlayersBoard(notif);
         },

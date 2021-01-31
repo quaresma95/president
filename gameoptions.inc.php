@@ -9,6 +9,7 @@ const OptRevolutionOn = 102;
 const OptJokersOn = 103;
 const OptMaxCardsPerPlayerHand = 104;
 const OptHighestCard = 105;
+const OptPassForTrick = 106;
 
 $game_options = [
     // note: game variant ID should start at 100 (ie: 100, 101, 102, ...). The maximum is 199.
@@ -84,6 +85,18 @@ $game_options = [
                 'name' => totranslate('Ace'),
                 'description' => totranslate('Standard card ranking, with Ace highest, 2 lowest')
             ],
+        ],
+    OptPassForTrick => [
+        'name' => totranslate('Pass Style'),
+        'values' => [
+            False => [
+                'name' => totranslate('One turn only'),
+                'description' => totranslate('Passing is for one turn only; you are allowed to play the same trick when it\'s your turn again')
+            ],
+            True => [
+                'name' => totranslate('Pass for Trick'),
+                'description' => totranslate('Passing is for the entire trick')
+            ]
         ]
     ]
 ];
