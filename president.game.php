@@ -686,9 +686,7 @@ EOT;
 
     function stNewHand()
     {
-        $next_player_id = "";
         $activePlayer = self::getActivePlayerId();
-        $nb_payers = self::getGameStateValue(GS::numPlayers);
         $firstRound = self::getGameStateValue(GS::isFirstRound);
         self::setGameStateValue(GS::isRevolutionTrick, 0);
 
@@ -697,21 +695,46 @@ EOT;
 
         // Take back all cards (from any location => null) to deck
         $this->cards->moveAllCardsInLocation(null, "deck");
-        $this->cards->shuffle('deck');
+        //$this->cards->shuffle('deck');
 
-        // Deal 13 cards to each players
-        // Create deck, shuffle it and give 13 initial cards
-        $i = 0;
-        while ($next_player_id != $activePlayer) {
-            $notifData = [];
-            $player_id = $next_player_id != '' ? $next_player_id : $activePlayer;
+        // Deal the cards, in pairs (unless there the number of cards in the deck is < 2 * playerCount)
+        $playerCount = $this->getPlayersNumber();
+        $deckSize = $this->cards->countCardInLocation("deck");
+        $deckLeft = $deckSize;
 
-            $notifData['cards'] = $this->cards->pickCards( $this->cards_per_player[$nb_payers][$i], 'deck', $player_id );
+        // The dealing player is the active player == the Beggar.
+        // He starts dealing at the player after him
+        $dealingPlayer = $activePlayer;
+        $firstPlayerToDealTo = self::getPlayerAfter( $dealingPlayer );
+        
+        while (true) {
+            $dealSize = ($deckLeft >= 2 * $playerCount) ? 2 : 1;
+            $iterPlayer = $firstPlayerToDealTo;
+            do {
+                if ($deckLeft == 0)
+                    break;
+                $dealtCards = $this->cards->pickCards( $dealSize, 'deck', $iterPlayer );
+                $deckLeft -= count($dealtCards);
+                $iterPlayer = self::getPlayerAfter( $iterPlayer );
+            }
+            while ($iterPlayer != $firstPlayerToDealTo);
+            if ($deckLeft == 0)
+                break;
+        }
+        // Notify players of their new Hand
+        {
+            $iterPlayer = $activePlayer;
+            do {
+                $notifData = [];
 
-            // Notify player about his cards
-            self::notifyPlayer( $player_id, 'newHand', '', $notifData);
-            $next_player_id = self::getPlayerAfter( $player_id );
-            $i++;
+                $notifData['cards'] = $this->cards->getPlayerHand( $iterPlayer );
+
+                // Notify player about his cards
+                self::notifyPlayer( $iterPlayer, 'newHand', '', $notifData);
+                $iterPlayer = self::getPlayerAfter( $iterPlayer );
+            }
+            while ($iterPlayer != $activePlayer);
+
         }
 
         if ($firstRound == 0) {
