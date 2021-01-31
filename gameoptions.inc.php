@@ -3,10 +3,13 @@
 /**
  * Copyright (c) 2020. Quaresma.
  */
+const OptGameDuration = 100;
+const OptSkipOn = 101;
+const OptRevolutionOn = 102;
 
 $game_options = [
     // note: game variant ID should start at 100 (ie: 100, 101, 102, ...). The maximum is 199.
-    100 => [
+    OptGameDuration => [
         'name' => totranslate('Duration of the game'),    
         'values' => [
             1 => ['name' => totranslate('50 points') ],
@@ -15,7 +18,7 @@ $game_options = [
             4 => ['name' => totranslate('10 round max') ]
         ]
     ],
-    101 => [
+    OptSkipOn => [
         'name' => totranslate('Skip'),
         'values' => [
             0 => [
@@ -28,7 +31,7 @@ $game_options = [
             ]
         ]
     ],
-    102 => [
+    OptRevolutionOn => [
         'name' => totranslate('Revolution'),
         'values' => [
             0 => [
