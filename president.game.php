@@ -81,6 +81,7 @@ class President extends Table
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
         $gameinfos = self::getGameinfos();
         $default_colors = $gameinfos['player_colors'];
+        $numberOfPlayers = count($players);
 
         self::setGameStateInitialValue(GS::isFirstRound, 1);
         self::setGameStateInitialValue(GS::finishOrder, 0);
@@ -90,7 +91,7 @@ class President extends Table
         self::setGameStateInitialValue(GS::isRevolutionTrick, 0);
         self::setGameStateInitialValue(GS::lastPlayerPlayedId, 0);
         self::setGameStateInitialValue(GS::presidentSwapCards, 0);
-        self::setGameStateInitialValue(GS::numPlayers, count($players));
+        self::setGameStateInitialValue(GS::numPlayers, $numberOfPlayers);
 
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
@@ -128,17 +129,26 @@ class President extends Table
         self::initStat('player', 'player_beggar_stat', 0);
         self::initStat('player', 'player_president_stat', 0);
 
-        // Create cards
+        // Create deck, starting from the highest card
         $cards = [];
-        foreach ( $this->colors as $color_id => $color ) {
+        $highestCardToInsert = 15;
+        $lowestCardToInsert = 3;
+        $maxNumberOfCardsPerPlayer = 13;
+        $maxNumberOfCards = $maxNumberOfCardsPerPlayer * $numberOfPlayers;
+        $optionJokersOn = $this->gamestate->table_globals[Opt::jokersOn];
+        $maxNumberOfNormalCards = $optionJokersOn ? $maxNumberOfCards - 2 : $maxNumberOfCards;
+
+        for ($value = $highestCardToInsert; $value >= $lowestCardToInsert; $value --) {
             // spade, heart, diamond, club
-            for ($value = 3; $value <= 15; $value ++) {
-                //  2, 3, 4, ... K, A
+            foreach ( $this->colors as $color_id => $color ) {
                 $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
+                if (count($cards) >= $maxNumberOfNormalCards)
+                    break;
             }
+            if (count($cards) >= $maxNumberOfNormalCards)
+            break;
         }
 
-        $optionJokersOn = $this->gamestate->table_globals[Opt::jokersOn];
         if ($optionJokersOn) {
             foreach ($this->special_cards as $special_card) {
                 $cards [] = [
@@ -706,7 +716,7 @@ EOT;
         // He starts dealing at the player after him
         $dealingPlayer = $activePlayer;
         $firstPlayerToDealTo = self::getPlayerAfter( $dealingPlayer );
-        
+
         while (true) {
             $dealSize = ($deckLeft >= 2 * $playerCount) ? 2 : 1;
             $iterPlayer = $firstPlayerToDealTo;

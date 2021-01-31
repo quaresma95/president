@@ -41,6 +41,11 @@
     font-size: 15px;
 }
 
+.player_table_3 {
+    height: 550px;
+    width: 520px;
+}
+
 .player_table_4 {
     height: 550px;
     width: 520px;
@@ -164,6 +169,21 @@
     margin-right: 10px;
     position: relative;
     float: left;
+}
+
+.card_place_3_1 {
+    left: 42%;
+    bottom: 11%
+}
+
+.card_place_3_2 {
+    left: 5%;
+    top: 33%
+}
+
+.card_place_3_3 {
+    left: 42%;
+    top: 0%
 }
 
 .card_place_4_1 {
@@ -353,6 +373,21 @@
         text-align: center;
         left: 40%;
         top: 39%;
+    }
+
+    .card_place_3_1 {
+        left: 40%;
+        bottom: 11%
+    }
+
+    .card_place_3_2 {
+        left: 5%;
+        top: 33%
+    }
+
+    .card_place_3_3 {
+        left: 40%;
+        top: 0%
     }
 
     .card_place_4_1 {

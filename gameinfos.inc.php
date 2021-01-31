@@ -32,15 +32,14 @@ $gameinfos = array(
 
 
 // Players configuration that can be played (ex: 2 to 4 players)
-'players' => array( 4, 5, 6, 7, 8 ),
+'players' => array( 3, 4, 5, 6, 7, 8 ),
 
 // Suggest players to play with this number of players. Must be null if there is no such advice, or if there is only one possible player configuration.
 'suggest_player_number' => null,
 
 // Discourage players to play with these numbers of players. Must be null if there is no such advice.
-'not_recommend_player_number' => null,
+'not_recommend_player_number' => array( 3 ),
 // 'not_recommend_player_number' => array( 2, 3 ),      // <= example: this is not recommended to play this game with 2 or 3 players
-
 
 // Estimated game duration, in minutes (used only for the launch, afterward the real duration is computed)
 'estimated_duration' => 30,           

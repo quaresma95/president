@@ -60,6 +60,11 @@ $this->nb_card_label = [
 ];
 
 $this->players_roles = [
+    3 => [
+        1 => clienttranslate('president'),
+        2 => clienttranslate('citizen'),
+        3 => clienttranslate('beggar'),
+    ],
     4 => [
         1 => clienttranslate('president'),
         2 => clienttranslate('prime minister'),
@@ -111,6 +116,11 @@ $this->icons_infos = [
 ];
 
 $this->icons_per_position = [
+    3 => [
+        1 => 'iconPresident',
+        2 => 'iconCitizen',
+        3 => 'iconBeggar',
+    ],
     4 => [
         1 => 'iconPresident',
         2 => 'iconPrimeMinister',
@@ -178,6 +188,11 @@ $this->game_duration = [
 ];
 
 $this->points_per_position = [
+    3 => [
+        1 => -5,
+        2 => 5,
+        3 => 15,
+    ],
     4 => [
         1 => -5,
         2 => 0,
