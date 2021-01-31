@@ -695,7 +695,7 @@ EOT;
 
         // Take back all cards (from any location => null) to deck
         $this->cards->moveAllCardsInLocation(null, "deck");
-        //$this->cards->shuffle('deck');
+        $this->cards->shuffle('deck');
 
         // Deal the cards, in pairs (unless there the number of cards in the deck is < 2 * playerCount)
         $playerCount = $this->getPlayersNumber();
