@@ -18,12 +18,14 @@ class GS {
     public const gameDuration = "gameDuration";
     public const optSkipOn = "optSkipOn";
     public const optRevolutionOn = "optRevolutionOn";
+    public const optJokersOn = "optJokersOn";
 }
 
 class Opt {
     public const gameDuration = 100;
     public const skipOn = 101;
     public const revolutionOn = 102;
+    public const jokersOn = 103;
 }
 
 class President extends Table
@@ -52,6 +54,7 @@ class President extends Table
             GS::gameDuration => Opt::gameDuration,
             GS::optSkipOn => Opt::skipOn,
             GS::optRevolutionOn => Opt::revolutionOn,
+            GS::optJokersOn => Opt::jokersOn,
         ]);
 
         $this->cards = self::getNew( "module.common.deck" );
@@ -135,12 +138,15 @@ class President extends Table
             }
         }
 
-        foreach ($this->special_cards as $special_card) {
-            $cards [] = [
-                'type' => $special_card['type'],
-                'type_arg' => $special_card['value'],
-                'nbr' => $special_card['nbr']
-            ];
+        $optionJokersOn = $this->gamestate->table_globals[Opt::jokersOn];
+        if ($optionJokersOn) {
+            foreach ($this->special_cards as $special_card) {
+                $cards [] = [
+                    'type' => $special_card['type'],
+                    'type_arg' => $special_card['value'],
+                    'nbr' => $special_card['nbr']
+                ];
+            }
         }
 
         $this->cards->createCards( $cards, 'deck' );
