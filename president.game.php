@@ -131,24 +131,8 @@ class President extends Table
 
         // Create deck, starting from the highest card
         $cards = [];
-        $highestCardToInsert = 15;
-        $lowestCardToInsert = 3;
-        $maxNumberOfCardsPerPlayer = 13;
-        $maxNumberOfCards = $maxNumberOfCardsPerPlayer * $numberOfPlayers;
+
         $optionJokersOn = $this->gamestate->table_globals[Opt::jokersOn];
-        $maxNumberOfNormalCards = $optionJokersOn ? $maxNumberOfCards - 2 : $maxNumberOfCards;
-
-        for ($value = $highestCardToInsert; $value >= $lowestCardToInsert; $value --) {
-            // spade, heart, diamond, club
-            foreach ( $this->colors as $color_id => $color ) {
-                $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
-                if (count($cards) >= $maxNumberOfNormalCards)
-                    break;
-            }
-            if (count($cards) >= $maxNumberOfNormalCards)
-            break;
-        }
-
         if ($optionJokersOn) {
             foreach ($this->special_cards as $special_card) {
                 $cards [] = [
@@ -157,6 +141,22 @@ class President extends Table
                     'nbr' => $special_card['nbr']
                 ];
             }
+        }
+
+        $highestCardToInsert = 15;
+        $lowestCardToInsert = 3;
+        $maxNumberOfCardsPerPlayer = 13;
+        $maxNumberOfCards = $maxNumberOfCardsPerPlayer * $numberOfPlayers;
+
+        for ($value = $highestCardToInsert; $value >= $lowestCardToInsert; $value --) {
+            // spade, heart, diamond, club
+            foreach ( $this->colors as $color_id => $color ) {
+                $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
+                if (count($cards) >= $maxNumberOfCards)
+                    break;
+            }
+            if (count($cards) >= $maxNumberOfCards)
+            break;
         }
 
         $this->cards->createCards( $cards, 'deck' );
