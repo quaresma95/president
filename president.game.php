@@ -722,20 +722,7 @@ EOT;
                 break;
         }
         // Notify players of their new Hand
-        {
-            $iterPlayer = $activePlayer;
-            do {
-                $notifData = [];
-
-                $notifData['cards'] = $this->cards->getPlayerHand( $iterPlayer );
-
-                // Notify player about his cards
-                self::notifyPlayer( $iterPlayer, 'newHand', '', $notifData);
-                $iterPlayer = self::getPlayerAfter( $iterPlayer );
-            }
-            while ($iterPlayer != $activePlayer);
-
-        }
+        $this->notifyPlayersOfNewHand();
 
         if ($firstRound == 0) {
             $sql = "SELECT player_role role, player_id id FROM player ORDER BY role ASC";
@@ -751,6 +738,22 @@ EOT;
         } else {
             $this->gamestate->nextState("playerTurn");
         }
+    }
+
+    function notifyPlayersOfNewHand()
+    {
+        $activePlayer = self::getActivePlayerId();
+        $iterPlayer = $activePlayer;
+        do {
+            $notifData = [];
+
+            $notifData['cards'] = $this->cards->getPlayerHand( $iterPlayer );
+
+            // Notify player about his cards
+            self::notifyPlayer( $iterPlayer, 'newHand', '', $notifData);
+            $iterPlayer = self::getPlayerAfter( $iterPlayer );
+        }
+        while ($iterPlayer != $activePlayer);
     }
 
     function stNewRound()
