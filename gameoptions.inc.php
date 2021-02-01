@@ -6,6 +6,7 @@
 const OptGameDuration = 100;
 const OptSkipOn = 101;
 const OptRevolutionOn = 102;
+const OptJokersOn = 103;
 
 $game_options = [
     // note: game variant ID should start at 100 (ie: 100, 101, 102, ...). The maximum is 199.
@@ -41,6 +42,19 @@ $game_options = [
             1 => [
                 'name' => totranslate('On'),
                 'description' => totranslate('When a player plays 4 identical cards, Revolution is triggered and the value-order of all cards (except Jokers) is reversed - until another player plays 4 cards.')
+            ]
+        ]
+    ],
+    OptJokersOn => [
+        'name' => totranslate('Jokers'),
+        'values' => [
+            False => [
+                'name' => totranslate('Off'),
+                'description' => totranslate('No Jokers will be added to the deck')
+            ],
+            True => [
+                'name' => totranslate('On'),
+                'description' => totranslate('2 Jokers will be added to the deck; A Joker beats any hand (except a Joker) and is unaffected by Revolution')
             ]
         ]
     ]
