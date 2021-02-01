@@ -19,6 +19,7 @@ class GS {
     public const optSkipOn = "optSkipOn";
     public const optRevolutionOn = "optRevolutionOn";
     public const optJokersOn = "optJokersOn";
+    public const optMaxCardsPerPlayerHand = "optMaxCardsPerPlayerHand";
 }
 
 class Opt {
@@ -26,6 +27,7 @@ class Opt {
     public const skipOn = 101;
     public const revolutionOn = 102;
     public const jokersOn = 103;
+    public const maxCardsPerPlayerHand = 104;
 }
 
 class President extends Table
@@ -55,6 +57,7 @@ class President extends Table
             GS::optSkipOn => Opt::skipOn,
             GS::optRevolutionOn => Opt::revolutionOn,
             GS::optJokersOn => Opt::jokersOn,
+            GS::optMaxCardsPerPlayerHand => Opt::maxCardsPerPlayerHand,
         ]);
 
         $this->cards = self::getNew( "module.common.deck" );
@@ -81,6 +84,7 @@ class President extends Table
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
         $gameinfos = self::getGameinfos();
         $default_colors = $gameinfos['player_colors'];
+        $numberOfPlayers = count($players);
 
         self::setGameStateInitialValue(GS::isFirstRound, 1);
         self::setGameStateInitialValue(GS::finishOrder, 0);
@@ -90,7 +94,7 @@ class President extends Table
         self::setGameStateInitialValue(GS::isRevolutionTrick, 0);
         self::setGameStateInitialValue(GS::lastPlayerPlayedId, 0);
         self::setGameStateInitialValue(GS::presidentSwapCards, 0);
-        self::setGameStateInitialValue(GS::numPlayers, count($players));
+        self::setGameStateInitialValue(GS::numPlayers, $numberOfPlayers);
 
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
@@ -128,15 +132,8 @@ class President extends Table
         self::initStat('player', 'player_beggar_stat', 0);
         self::initStat('player', 'player_president_stat', 0);
 
-        // Create cards
+        // Create deck, starting from the highest card
         $cards = [];
-        foreach ( $this->colors as $color_id => $color ) {
-            // spade, heart, diamond, club
-            for ($value = 3; $value <= 15; $value ++) {
-                //  2, 3, 4, ... K, A
-                $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
-            }
-        }
 
         $optionJokersOn = $this->gamestate->table_globals[Opt::jokersOn];
         if ($optionJokersOn) {
@@ -147,6 +144,22 @@ class President extends Table
                     'nbr' => $special_card['nbr']
                 ];
             }
+        }
+
+        $highestCardToInsert = 15;
+        $lowestCardToInsert = 3;
+        $maxNumberOfCardsPerPlayer = $this->gamestate->table_globals[Opt::maxCardsPerPlayerHand];
+        $maxNumberOfCards = $maxNumberOfCardsPerPlayer * $numberOfPlayers;
+
+        for ($value = $highestCardToInsert; $value >= $lowestCardToInsert; $value --) {
+            // spade, heart, diamond, club
+            foreach ( $this->colors as $color_id => $color ) {
+                $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
+                if (count($cards) >= $maxNumberOfCards)
+                    break;
+            }
+            if (count($cards) >= $maxNumberOfCards)
+                break;
         }
 
         $this->cards->createCards( $cards, 'deck' );
@@ -706,7 +719,7 @@ EOT;
         // He starts dealing at the player after him
         $dealingPlayer = $activePlayer;
         $firstPlayerToDealTo = self::getPlayerAfter( $dealingPlayer );
-        
+
         while (true) {
             $dealSize = ($deckLeft >= 2 * $playerCount) ? 2 : 1;
             $iterPlayer = $firstPlayerToDealTo;
