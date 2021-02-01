@@ -8,6 +8,7 @@ const OptSkipOn = 101;
 const OptRevolutionOn = 102;
 const OptJokersOn = 103;
 const OptMaxCardsPerPlayerHand = 104;
+const OptHighestCard = 105;
 
 $game_options = [
     // note: game variant ID should start at 100 (ie: 100, 101, 102, ...). The maximum is 199.
@@ -69,6 +70,19 @@ $game_options = [
             8 => [
                 'name' => totranslate('8'),
                 'description' => totranslate('Players will start with up to 8 hands in hand. Irrelevant for 7 and 8 player games, as there are not enough cards in a deck to deal that many anyway')
+            ],
+        ]
+    ],
+    OptHighestCard => [
+        'name' => totranslate('Highest card in the deck'),
+        'values' => [
+            15 => [
+                'name' => totranslate('2'),
+                'description' => totranslate('The 2 is the highest card, then Ace, King etc.')
+            ],
+            14 => [
+                'name' => totranslate('Ace'),
+                'description' => totranslate('Standard card ranking, with Ace highest, 2 lowest')
             ],
         ]
     ]

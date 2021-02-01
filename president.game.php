@@ -15,11 +15,14 @@ class GS {
     public const currentHandType = "currentHandType";
     public const lastPlayerPlayedId = "lastPlayerPlayedId";
     public const presidentSwapCards = "presidentSwapCards";
+    public const lowestCardValue = "lowestCardValue";
+
     public const gameDuration = "gameDuration";
     public const optSkipOn = "optSkipOn";
     public const optRevolutionOn = "optRevolutionOn";
     public const optJokersOn = "optJokersOn";
     public const optMaxCardsPerPlayerHand = "optMaxCardsPerPlayerHand";
+    public const optHighestCard = "optHighestCard";
 }
 
 class Opt {
@@ -28,6 +31,7 @@ class Opt {
     public const revolutionOn = 102;
     public const jokersOn = 103;
     public const maxCardsPerPlayerHand = 104;
+    public const highestCard = 105;
 }
 
 class President extends Table
@@ -53,11 +57,13 @@ class President extends Table
             GS::currentHandType => 16,
             GS::lastPlayerPlayedId => 17,
             GS::presidentSwapCards => 18,
+            GS::lowestCardValue => 19,
             GS::gameDuration => Opt::gameDuration,
             GS::optSkipOn => Opt::skipOn,
             GS::optRevolutionOn => Opt::revolutionOn,
             GS::optJokersOn => Opt::jokersOn,
             GS::optMaxCardsPerPlayerHand => Opt::maxCardsPerPlayerHand,
+            GS::optHighestCard => Opt::highestCard,
         ]);
 
         $this->cards = self::getNew( "module.common.deck" );
@@ -146,8 +152,10 @@ class President extends Table
             }
         }
 
-        $highestCardToInsert = 15;
-        $lowestCardToInsert = 3;
+        $highestCardToInsert = $this->getHighestCardValue();
+        // If the Highest card is 15 (2), the lowest should be 3, otherwise 2
+        $lowestCardToInsert = $highestCardToInsert == 15 ? 3 : 2;
+
         $maxNumberOfCardsPerPlayer = $this->gamestate->table_globals[Opt::maxCardsPerPlayerHand];
         $maxNumberOfCards = $maxNumberOfCardsPerPlayer * $numberOfPlayers;
 
@@ -162,12 +170,26 @@ class President extends Table
                 break;
         }
 
+        $lowestCardInDeck = end($cards);
+        $lowestCardValue = $lowestCardInDeck['type_arg'];
+        self::setGameStateInitialValue(GS::lowestCardValue, $lowestCardValue);
+
         $this->cards->createCards( $cards, 'deck' );
 
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
 
         /************ End of the game initialization *****/
+    }
+
+    protected function getHighestCardValue()
+    {
+        return $this->gamestate->table_globals[Opt::highestCard];
+    }
+
+    protected function getLowestCardValue()
+    {
+        return self::getGameStateValue(GS::lowestCardValue);
     }
 
     /*
@@ -342,7 +364,6 @@ EOT;
         $lastCardValue = self::getGameStateValue(GS::lastCardValue);
         $currentHandType = self::getGameStateValue(GS::currentHandType);
         $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
-        $best_card_current_hand = $currentOrder == 0 ? 15 : 3;
 
         if (empty($cards)) {
             $error = true;
@@ -358,7 +379,7 @@ EOT;
                     if ($lastCardValue > $card['type_arg']) {
                         $error = true;
                     } else if ($lastCardValue == $card['type_arg']) {
-                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $best_card_current_hand])) || !$optionSkipEnabled) {
+                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $this->getHighestCardValue()])) || !$optionSkipEnabled) {
                             $error = true;
                         }
                     }
@@ -366,7 +387,7 @@ EOT;
                     if ($lastCardValue < $card['type_arg'] && !in_array($card['type_arg'], [933, 934])) {
                         $error = true;
                     } else if ($lastCardValue == $card['type_arg']) {
-                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $best_card_current_hand])) || !$optionSkipEnabled) {
+                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $this->getLowestCardValue()])) || !$optionSkipEnabled) {
                             $error = true;
                         }
                     }
@@ -522,7 +543,6 @@ EOT;
         $lastCardValue = self::getGameStateValue(GS::lastCardValue);
         $currentHandType = self::getGameStateValue(GS::currentHandType);
         $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
-        $best_card_current_hand = $currentOrder == 0 ? 15 : 3;
         $optionSkipEnabled = $this->gamestate->table_globals[Opt::skipOn] == 1 ? True : False;
 
         foreach ($card_ids as $card_id) {
@@ -535,16 +555,16 @@ EOT;
             self::setGameStateValue(GS::currentHandType, $nb_cards);
         } elseif ($error = $this->checkHand($cards)) {
             if ($currentOrder == 0) {
-                if ($optionSkipEnabled && $best_card_current_hand != $currentCard['type_arg']) {
-                    throw new BgaUserException( self::_("You must play card(s) stronger or equal than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
+                if ($optionSkipEnabled && $this->getHighestCardValue() != $currentCard['type_arg']) {
+                    throw new BgaUserException( self::_("You must play card(s) stronger or equal than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
                 } else {
-                    throw new BgaUserException( self::_("You must play card(s) stronger than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
+                    throw new BgaUserException( self::_("You must play card(s) stronger than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
                 }
             } else {
-                if ($optionSkipEnabled && $best_card_current_hand != $currentCard['type_arg']) {
-                    throw new BgaUserException( self::_("You must play card(s) weaker or equal than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
+                if ($optionSkipEnabled && $this->getLowestCardValue() != $currentCard['type_arg']) {
+                    throw new BgaUserException( self::_("You must play card(s) weaker or equal than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
                 } else {
-                    throw new BgaUserException( self::_("You must play card(s) weaker than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );  
+                    throw new BgaUserException( self::_("You must play card(s) weaker than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );  
                 }
                   
             }
@@ -571,9 +591,9 @@ EOT;
             'player_id' => $player_id,
             'player_name' => self::getActivePlayerName(),
             'value' => $currentCard ['type_arg'],
-            'value_displayed' => $this->values_label [$currentCard ['type_arg']],
+            'value_displayed' => $this->card_names [$currentCard ['type_arg']],
             'color' => $currentCard ['type'],
-            'nb_cards' => $this->nb_card_label[$nb_cards],
+            'nb_cards' => $this->card_count_label[$nb_cards],
         ]);
 
         // check if player has finished
@@ -785,7 +805,7 @@ EOT;
         $next_player_id = $this->getNextActivePlayer();
         $last_card = self::getGameStateValue(GS::lastCardValue);
         $last_player_played = self::getGameStateValue(GS::lastPlayerPlayedId);
-        $best_card_current_hand = self::getGameStateValue(GS::isRevolutionTrick) == 0 ? 15 : 3;
+        $best_card_current_hand = self::getGameStateValue(GS::isRevolutionTrick) == 0 ? $this->getHighestCardValue() : $this->getLowestCardValue();
 
         if ($this->checkEndGame()) {
             // End of the game
