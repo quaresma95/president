@@ -7,6 +7,7 @@ const OptGameDuration = 100;
 const OptSkipOn = 101;
 const OptRevolutionOn = 102;
 const OptJokersOn = 103;
+const OptMaxCardsPerPlayerHand = 104;
 
 $game_options = [
     // note: game variant ID should start at 100 (ie: 100, 101, 102, ...). The maximum is 199.
@@ -56,6 +57,19 @@ $game_options = [
                 'name' => totranslate('On'),
                 'description' => totranslate('2 Jokers will be added to the deck; A Joker beats any hand (except a Joker) and is unaffected by Revolution')
             ]
+        ]
+    ],
+    OptMaxCardsPerPlayerHand => [
+        'name' => totranslate('Max Number of Cards per Player'),
+        'values' => [
+            14 => [
+                'name' => totranslate('Unlimited'),
+                'description' => totranslate('A full deck of cards will be used (plus optionally Jokers); this translates to up to 14 cards per player in a 4-player game')
+            ],
+            8 => [
+                'name' => totranslate('8'),
+                'description' => totranslate('Players will start with up to 8 hands in hand. Irrelevant for 7 and 8 player games, as there are not enough cards in a deck to deal that many anyway')
+            ],
         ]
     ]
 ];

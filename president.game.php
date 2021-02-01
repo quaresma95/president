@@ -19,6 +19,7 @@ class GS {
     public const optSkipOn = "optSkipOn";
     public const optRevolutionOn = "optRevolutionOn";
     public const optJokersOn = "optJokersOn";
+    public const optMaxCardsPerPlayerHand = "optMaxCardsPerPlayerHand";
 }
 
 class Opt {
@@ -26,6 +27,7 @@ class Opt {
     public const skipOn = 101;
     public const revolutionOn = 102;
     public const jokersOn = 103;
+    public const maxCardsPerPlayerHand = 104;
 }
 
 class President extends Table
@@ -55,6 +57,7 @@ class President extends Table
             GS::optSkipOn => Opt::skipOn,
             GS::optRevolutionOn => Opt::revolutionOn,
             GS::optJokersOn => Opt::jokersOn,
+            GS::optMaxCardsPerPlayerHand => Opt::maxCardsPerPlayerHand,
         ]);
 
         $this->cards = self::getNew( "module.common.deck" );
@@ -145,7 +148,7 @@ class President extends Table
 
         $highestCardToInsert = 15;
         $lowestCardToInsert = 3;
-        $maxNumberOfCardsPerPlayer = 13;
+        $maxNumberOfCardsPerPlayer = $this->gamestate->table_globals[Opt::maxCardsPerPlayerHand];
         $maxNumberOfCards = $maxNumberOfCardsPerPlayer * $numberOfPlayers;
 
         for ($value = $highestCardToInsert; $value >= $lowestCardToInsert; $value --) {
@@ -156,7 +159,7 @@ class President extends Table
                     break;
             }
             if (count($cards) >= $maxNumberOfCards)
-            break;
+                break;
         }
 
         $this->cards->createCards( $cards, 'deck' );
