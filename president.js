@@ -72,18 +72,7 @@ function (dojo, declare) {
                     value -= 930;
                 }
 
-                try {
-                    this.playerHand.addToStockWithId(this.getCardUniqueId(color, value), card.id);
-                } catch ( error ) {
-
-                    console.log( "Error caught in Foo():", error.message );
-                    console.log( error.stack );
-                    console.log(color);
-                    console.log(value);
-                    console.log(card.id);
-                    console.log(this.getCardUniqueId(color, value));
-                        throw( error );
-                }
+                this.playerHand.addToStockWithId(this.getCardUniqueId(color, value), card.id);
             }
 
             // Cards played on table
