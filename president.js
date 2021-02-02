@@ -65,7 +65,18 @@ function (dojo, declare) {
                     value -= 930;
                 }
 
-                this.playerHand.addToStockWithId(this.getCardUniqueId(color, value), card.id);
+                try {
+                    this.playerHand.addToStockWithId(this.getCardUniqueId(color, value), card.id);
+                } catch ( error ) {
+
+                    console.log( "Error caught in Foo():", error.message );
+                    console.log( error.stack );
+                    console.log(color);
+                    console.log(value);
+                    console.log(card.id);
+                    console.log(this.getCardUniqueId(color, value));
+                        throw( error );
+                }
             }
 
             // Cards played on table
@@ -249,9 +260,11 @@ function (dojo, declare) {
             // init table round count
             this.setupRoundCount();
         },
+        
         // Get card unique identifier based on its color and value
         getCardUniqueId : function(color, value) {
-            return (color - 1) * 13 + (value - 3);
+            valueToUse = value >= 3 ? value : 15;
+            return (color - 1) * 13 + (valueToUse - 3);
         },
 
         setupRevolutionTrick: function() {
@@ -417,6 +430,10 @@ function (dojo, declare) {
                         play_id : play_id
                     }), 'tableCard');
                 }
+
+                // Map '2' to '15' as that's where it is in the cards.jpg
+                if (value < 3)
+                    value = 15;
 
                 dojo.place(this.format_block('jstpl_cardontable', {
                     x : this.cardwidth * (value - 3),
