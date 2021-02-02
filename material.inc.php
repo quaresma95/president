@@ -31,9 +31,8 @@ $this->special_cards = [
     ]
 ];
 
-
-
-$this->values_label = [
+$this->card_names = [
+    2 => '2',
     3 => '3',
     4 => '4',
     5 => '5',
@@ -51,7 +50,7 @@ $this->values_label = [
     934 => clienttranslate('Jocker')
 ];
 
-$this->nb_card_label = [
+$this->card_count_label = [
     0 => '',
     1 => '',
     2 => clienttranslate('double'),

@@ -40,11 +40,18 @@ function (dojo, declare) {
             this.playerHand.image_items_per_row = 13;
             this.handler = dojo.connect( this.playerHand, 'onClickOnItem', this, 'onSelectCard' );
 
+            var highest_card_value = parseInt(gamedatas.highestCard);
+            if (highest_card_value == NaN)
+                highest_card_value = 14;
+
             for (var color = 1; color <= 4; color++) {
                 for (var value = 3; value <= 15; value++) {
                     // Build card type id
                     var card_type_id = this.getCardUniqueId(color, value);
-                    this.playerHand.addItemType(card_type_id, parseInt(value), g_gamethemeurl + 'img/cards.jpg', card_type_id);
+                    var weight = parseInt(value);
+                    if (weight > highest_card_value)
+                        weight = 2;
+                    this.playerHand.addItemType(card_type_id, weight, g_gamethemeurl + 'img/cards.jpg', card_type_id);
                 }
             }
             //add jockers
@@ -249,9 +256,11 @@ function (dojo, declare) {
             // init table round count
             this.setupRoundCount();
         },
+
         // Get card unique identifier based on its color and value
         getCardUniqueId : function(color, value) {
-            return (color - 1) * 13 + (value - 3);
+            valueToUse = value >= 3 ? value : 15;
+            return (color - 1) * 13 + (valueToUse - 3);
         },
 
         setupRevolutionTrick: function() {
@@ -417,6 +426,10 @@ function (dojo, declare) {
                         play_id : play_id
                     }), 'tableCard');
                 }
+
+                // Map '2' to '15' as that's where it is in the cards.jpg
+                if (value < 3)
+                    value = 15;
 
                 dojo.place(this.format_block('jstpl_cardontable', {
                     x : this.cardwidth * (value - 3),
