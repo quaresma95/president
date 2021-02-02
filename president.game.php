@@ -15,7 +15,23 @@ class GS {
     public const currentHandType = "currentHandType";
     public const lastPlayerPlayedId = "lastPlayerPlayedId";
     public const presidentSwapCards = "presidentSwapCards";
+    public const lowestCardValue = "lowestCardValue";
+
     public const gameDuration = "gameDuration";
+    public const optSkipOn = "optSkipOn";
+    public const optRevolutionOn = "optRevolutionOn";
+    public const optJokersOn = "optJokersOn";
+    public const optMaxCardsPerPlayerHand = "optMaxCardsPerPlayerHand";
+    public const optHighestCard = "optHighestCard";
+}
+
+class Opt {
+    public const gameDuration = 100;
+    public const skipOn = 101;
+    public const revolutionOn = 102;
+    public const jokersOn = 103;
+    public const maxCardsPerPlayerHand = 104;
+    public const highestCard = 105;
 }
 
 class President extends Table
@@ -41,7 +57,13 @@ class President extends Table
             GS::currentHandType => 16,
             GS::lastPlayerPlayedId => 17,
             GS::presidentSwapCards => 18,
-            GS::gameDuration => 100, // Is 100 allowed!?
+            GS::lowestCardValue => 19,
+            GS::gameDuration => Opt::gameDuration,
+            GS::optSkipOn => Opt::skipOn,
+            GS::optRevolutionOn => Opt::revolutionOn,
+            GS::optJokersOn => Opt::jokersOn,
+            GS::optMaxCardsPerPlayerHand => Opt::maxCardsPerPlayerHand,
+            GS::optHighestCard => Opt::highestCard,
         ]);
 
         $this->cards = self::getNew( "module.common.deck" );
@@ -68,6 +90,7 @@ class President extends Table
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
         $gameinfos = self::getGameinfos();
         $default_colors = $gameinfos['player_colors'];
+        $numberOfPlayers = count($players);
 
         self::setGameStateInitialValue(GS::isFirstRound, 1);
         self::setGameStateInitialValue(GS::finishOrder, 0);
@@ -77,12 +100,12 @@ class President extends Table
         self::setGameStateInitialValue(GS::isRevolutionTrick, 0);
         self::setGameStateInitialValue(GS::lastPlayerPlayedId, 0);
         self::setGameStateInitialValue(GS::presidentSwapCards, 0);
-        self::setGameStateInitialValue(GS::numPlayers, count($players));
+        self::setGameStateInitialValue(GS::numPlayers, $numberOfPlayers);
 
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
 
-        $gameDurationOption = $this->gamestate->table_globals[100];
+        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
         self::setGameStateValue(GS::defaultScore, $this->game_duration[$gameDurationOption]['default_score']);
 
         $values = [];
@@ -115,23 +138,41 @@ class President extends Table
         self::initStat('player', 'player_beggar_stat', 0);
         self::initStat('player', 'player_president_stat', 0);
 
-        // Create cards
+        // Create deck, starting from the highest card
         $cards = [];
-        foreach ( $this->colors as $color_id => $color ) {
-            // spade, heart, diamond, club
-            for ($value = 3; $value <= 15; $value ++) {
-                //  2, 3, 4, ... K, A
-                $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
+
+        $optionJokersOn = $this->gamestate->table_globals[Opt::jokersOn];
+        if ($optionJokersOn) {
+            foreach ($this->special_cards as $special_card) {
+                $cards [] = [
+                    'type' => $special_card['type'],
+                    'type_arg' => $special_card['value'],
+                    'nbr' => $special_card['nbr']
+                ];
             }
         }
 
-        foreach ($this->special_cards as $special_card) {
-            $cards [] = [
-                'type' => $special_card['type'],
-                'type_arg' => $special_card['value'],
-                'nbr' => $special_card['nbr']
-            ];
+        $highestCardToInsert = $this->getHighestCardValue();
+        // If the Highest card is 15 (2), the lowest should be 3, otherwise 2
+        $lowestCardToInsert = $highestCardToInsert == 15 ? 3 : 2;
+
+        $maxNumberOfCardsPerPlayer = $this->gamestate->table_globals[Opt::maxCardsPerPlayerHand];
+        $maxNumberOfCards = $maxNumberOfCardsPerPlayer * $numberOfPlayers;
+
+        for ($value = $highestCardToInsert; $value >= $lowestCardToInsert; $value --) {
+            // spade, heart, diamond, club
+            foreach ( $this->colors as $color_id => $color ) {
+                $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
+                if (count($cards) >= $maxNumberOfCards)
+                    break;
+            }
+            if (count($cards) >= $maxNumberOfCards)
+                break;
         }
+
+        $lowestCardInDeck = end($cards);
+        $lowestCardValue = $lowestCardInDeck['type_arg'];
+        self::setGameStateInitialValue(GS::lowestCardValue, $lowestCardValue);
 
         $this->cards->createCards( $cards, 'deck' );
 
@@ -139,6 +180,16 @@ class President extends Table
         $this->activeNextPlayer();
 
         /************ End of the game initialization *****/
+    }
+
+    protected function getHighestCardValue()
+    {
+        return $this->gamestate->table_globals[Opt::highestCard];
+    }
+
+    protected function getLowestCardValue()
+    {
+        return self::getGameStateValue(GS::lowestCardValue);
     }
 
     /*
@@ -154,7 +205,7 @@ class President extends Table
     {
         $result = [];
     
-        $gameDurationOption = $this->gamestate->table_globals[100];
+        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
         
         $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
     
@@ -169,6 +220,8 @@ class President extends Table
         // Cards in player hand
         $result['nb_players'] = self::getGameStateValue(GS::numPlayers);
         $result['nb_round'] = self::getStat('Hand_number'); // Counds like an anti-pattern to use stat as game data
+
+        $result['highestCard'] = $this->gamestate->table_globals[Opt::highestCard];
 
         if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
             $result['max_round'] = $this->game_duration[$gameDurationOption]['max_round'];
@@ -221,7 +274,7 @@ EOT;
         if( $state['name'] == 'gameEnd' ) {
             $progression = 100;
         } else {
-            $gameDurationOption = $this->gamestate->table_globals[100];
+            $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
             if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
                 $actual_round = self::getStat('Hand_number') - 1;
                 $max_round = $this->game_duration[$gameDurationOption]['max_round'];
@@ -309,11 +362,10 @@ EOT;
 
     private function checkHand($cards) {
         $error = false;
-        $gameOptions = $this->gamestate->table_globals[101];
+        $optionSkipEnabled = $this->gamestate->table_globals[Opt::skipOn] == 1 ? True : False;
         $lastCardValue = self::getGameStateValue(GS::lastCardValue);
         $currentHandType = self::getGameStateValue(GS::currentHandType);
         $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
-        $best_card_current_hand = $currentOrder == 0 ? 15 : 3;
 
         if (empty($cards)) {
             $error = true;
@@ -329,7 +381,7 @@ EOT;
                     if ($lastCardValue > $card['type_arg']) {
                         $error = true;
                     } else if ($lastCardValue == $card['type_arg']) {
-                        if (($gameOptions == 1 && in_array($card['type_arg'], [933, 934, $best_card_current_hand])) || $gameOptions == 0) {
+                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $this->getHighestCardValue()])) || !$optionSkipEnabled) {
                             $error = true;
                         }
                     }
@@ -337,7 +389,7 @@ EOT;
                     if ($lastCardValue < $card['type_arg'] && !in_array($card['type_arg'], [933, 934])) {
                         $error = true;
                     } else if ($lastCardValue == $card['type_arg']) {
-                        if (($gameOptions == 1 && in_array($card['type_arg'], [933, 934, $best_card_current_hand])) || $gameOptions == 0) {
+                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $this->getLowestCardValue()])) || !$optionSkipEnabled) {
                             $error = true;
                         }
                     }
@@ -440,7 +492,8 @@ EOT;
 
     function checkRevolutionTrick($currentOrder, $player_id, $card_ids) 
     {
-        if (count($card_ids) == 4) {
+        $optionRevolutionEnabled = $this->gamestate->table_globals[Opt::revolutionOn] == 1 ? True : False;
+        if ($optionRevolutionEnabled && count($card_ids) == 4) {
             //notif revolution
             self::setGameStateValue(GS::isRevolutionTrick, ($currentOrder == 0 ? 1 : 0));
 
@@ -492,8 +545,7 @@ EOT;
         $lastCardValue = self::getGameStateValue(GS::lastCardValue);
         $currentHandType = self::getGameStateValue(GS::currentHandType);
         $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
-        $best_card_current_hand = $currentOrder == 0 ? 15 : 3;
-        $gameOptions = $this->gamestate->table_globals[101];
+        $optionSkipEnabled = $this->gamestate->table_globals[Opt::skipOn] == 1 ? True : False;
 
         foreach ($card_ids as $card_id) {
             $currentCard = $this->cards->getCard($card_id);
@@ -505,16 +557,16 @@ EOT;
             self::setGameStateValue(GS::currentHandType, $nb_cards);
         } elseif ($error = $this->checkHand($cards)) {
             if ($currentOrder == 0) {
-                if ($gameOptions == 1 && $best_card_current_hand != $currentCard['type_arg']) {
-                    throw new BgaUserException( self::_("You must play card(s) stronger or equal than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
+                if ($optionSkipEnabled && $this->getHighestCardValue() != $currentCard['type_arg']) {
+                    throw new BgaUserException( self::_("You must play card(s) stronger or equal than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
                 } else {
-                    throw new BgaUserException( self::_("You must play card(s) stronger than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
+                    throw new BgaUserException( self::_("You must play card(s) stronger than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
                 }
             } else {
-                if ($gameOptions == 1 && $best_card_current_hand != $currentCard['type_arg']) {
-                    throw new BgaUserException( self::_("You must play card(s) weaker or equal than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );
+                if ($optionSkipEnabled && $this->getLowestCardValue() != $currentCard['type_arg']) {
+                    throw new BgaUserException( self::_("You must play card(s) weaker or equal than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
                 } else {
-                    throw new BgaUserException( self::_("You must play card(s) weaker than a {$this->nb_card_label[$currentHandType]} {$this->values_label[$lastCardValue]}") );  
+                    throw new BgaUserException( self::_("You must play card(s) weaker than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );  
                 }
                   
             }
@@ -523,7 +575,7 @@ EOT;
         }
 
         // check skip option
-        if ($currentCard['type_arg'] == $lastCardValue && $gameOptions == 1) {
+        if ($currentCard['type_arg'] == $lastCardValue && $optionSkipEnabled) {
             $skipped = 1;
         }
          
@@ -541,9 +593,9 @@ EOT;
             'player_id' => $player_id,
             'player_name' => self::getActivePlayerName(),
             'value' => $currentCard ['type_arg'],
-            'value_displayed' => $this->values_label [$currentCard ['type_arg']],
+            'value_displayed' => $this->card_names [$currentCard ['type_arg']],
             'color' => $currentCard ['type'],
-            'nb_cards' => $this->nb_card_label[$nb_cards],
+            'nb_cards' => $this->card_count_label[$nb_cards],
         ]);
 
         // check if player has finished
@@ -669,9 +721,7 @@ EOT;
 
     function stNewHand()
     {
-        $next_player_id = "";
         $activePlayer = self::getActivePlayerId();
-        $nb_payers = self::getGameStateValue(GS::numPlayers);
         $firstRound = self::getGameStateValue(GS::isFirstRound);
         self::setGameStateValue(GS::isRevolutionTrick, 0);
 
@@ -682,20 +732,32 @@ EOT;
         $this->cards->moveAllCardsInLocation(null, "deck");
         $this->cards->shuffle('deck');
 
-        // Deal 13 cards to each players
-        // Create deck, shuffle it and give 13 initial cards
-        $i = 0;
-        while ($next_player_id != $activePlayer) {
-            $notifData = [];
-            $player_id = $next_player_id != '' ? $next_player_id : $activePlayer;
+        // Deal the cards, in pairs (unless there the number of cards in the deck is < 2 * playerCount)
+        $playerCount = $this->getPlayersNumber();
+        $deckSize = $this->cards->countCardInLocation("deck");
+        $deckLeft = $deckSize;
 
-            $notifData['cards'] = $this->cards->pickCards( $this->cards_per_player[$nb_payers][$i], 'deck', $player_id );
+        // The dealing player is the active player == the Beggar.
+        // He starts dealing at the player after him
+        $dealingPlayer = $activePlayer;
+        $firstPlayerToDealTo = self::getPlayerAfter( $dealingPlayer );
 
-            // Notify player about his cards
-            self::notifyPlayer( $player_id, 'newHand', '', $notifData);
-            $next_player_id = self::getPlayerAfter( $player_id );
-            $i++;
+        while (true) {
+            $dealSize = ($deckLeft >= 2 * $playerCount) ? 2 : 1;
+            $iterPlayer = $firstPlayerToDealTo;
+            do {
+                if ($deckLeft == 0)
+                    break;
+                $dealtCards = $this->cards->pickCards( $dealSize, 'deck', $iterPlayer );
+                $deckLeft -= count($dealtCards);
+                $iterPlayer = self::getPlayerAfter( $iterPlayer );
+            }
+            while ($iterPlayer != $firstPlayerToDealTo);
+            if ($deckLeft == 0)
+                break;
         }
+        // Notify players of their new Hand
+        $this->notifyPlayersOfNewHand();
 
         if ($firstRound == 0) {
             $sql = "SELECT player_role role, player_id id FROM player ORDER BY role ASC";
@@ -711,6 +773,22 @@ EOT;
         } else {
             $this->gamestate->nextState("playerTurn");
         }
+    }
+
+    function notifyPlayersOfNewHand()
+    {
+        $activePlayer = self::getActivePlayerId();
+        $iterPlayer = $activePlayer;
+        do {
+            $notifData = [];
+
+            $notifData['cards'] = $this->cards->getPlayerHand( $iterPlayer );
+
+            // Notify player about his cards
+            self::notifyPlayer( $iterPlayer, 'newHand', '', $notifData);
+            $iterPlayer = self::getPlayerAfter( $iterPlayer );
+        }
+        while ($iterPlayer != $activePlayer);
     }
 
     function stNewRound()
@@ -729,7 +807,7 @@ EOT;
         $next_player_id = $this->getNextActivePlayer();
         $last_card = self::getGameStateValue(GS::lastCardValue);
         $last_player_played = self::getGameStateValue(GS::lastPlayerPlayedId);
-        $best_card_current_hand = self::getGameStateValue(GS::isRevolutionTrick) == 0 ? 15 : 3;
+        $best_card_current_hand = self::getGameStateValue(GS::isRevolutionTrick) == 0 ? $this->getHighestCardValue() : $this->getLowestCardValue();
 
         if ($this->checkEndGame()) {
             // End of the game
@@ -814,7 +892,7 @@ EOT;
         }
 
         ///// Test if this is the end of the game by round
-        $gameDurationOption = $this->gamestate->table_globals[100];
+        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
         if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
             if ($this->game_duration[$gameDurationOption]['max_round'] == self::getStat('Hand_number')) {
                 $this->gamestate->nextState("endGame");

@@ -31,9 +31,8 @@ $this->special_cards = [
     ]
 ];
 
-
-
-$this->values_label = [
+$this->card_names = [
+    2 => '2',
     3 => '3',
     4 => '4',
     5 => '5',
@@ -51,7 +50,7 @@ $this->values_label = [
     934 => clienttranslate('Jocker')
 ];
 
-$this->nb_card_label = [
+$this->card_count_label = [
     0 => '',
     1 => '',
     2 => clienttranslate('double'),
@@ -150,49 +149,6 @@ $this->icons_per_position = [
         6 => 'iconCitizen',
         7 => 'iconPeasant',
         8 => 'iconBeggar',
-    ],
-];
-
-$this->cards_per_player = [
-    4 => [
-        14,
-        14,
-        13,
-        13
-    ],
-    5 => [
-        11,
-        11,
-        11,
-        11,
-        10
-    ],
-    6 => [
-        9,
-        9,
-        9,
-        9,
-        9,
-        9,
-    ],
-    7 => [
-        8,
-        8,
-        8,
-        8,
-        8,
-        7,
-        7
-    ],
-    8 => [
-        7,
-        7,
-        7,
-        7,
-        7,
-        7,
-        6,
-        6
     ],
 ];
 
