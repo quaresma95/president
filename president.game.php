@@ -221,6 +221,8 @@ class President extends Table
         $result['nb_players'] = self::getGameStateValue(GS::numPlayers);
         $result['nb_round'] = self::getStat('Hand_number'); // Counds like an anti-pattern to use stat as game data
 
+        $result['highestCard'] = $this->gamestate->table_globals[Opt::highestCard];
+
         if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
             $result['max_round'] = $this->game_duration[$gameDurationOption]['max_round'];
         }
