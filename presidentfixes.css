@@ -1,0 +1,147 @@
+/**
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * Fixes and variants implementation: © ufm <tel2tale@gmail.com>
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
+ */
+
+#page-title {line-height: 38px;} #active_player_statusbar_icon {top: -5px;}
+#page-title.action-button.bgabutton, #page-title.bgabutton {margin-bottom: 4px;}
+#gameaction_status_wrap > div > img {top: 7px;}
+
+.tableWindow th {text-align: center;}
+
+.target_score_10::after {content: " / 10";}
+.target_score_15::after {content: " / 15";}
+.target_score_20::after {content: " / 20";}
+
+#game_board {
+    position: relative;
+    width: 660px;
+    height: 420px;
+    margin: auto;
+    background: green;
+    border-radius: 10px;
+}
+#game_board.shrink {width: 500px;}
+#game_board.three_player {width: 360px;}
+#game_board.two_player {width: 240px;}
+#game_board.spectator {height: 630px;}
+.playertable {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    position: absolute;
+    width: 100px;
+    height: 180px;
+    margin: 5px;
+    border-radius: 10px;
+}
+.playertable_S {left: calc(50% - 65px); bottom: 0;}
+.playertable_W {left: 5px; top: 210px;}
+.playertable_NWW {left: 5px; top: 0;}
+.playertable_NNW {left: calc(50% - 195px); top: 0;}
+.playertable_N {left: calc(50% - 65px); top: 0;}
+.playertable_NNE {right: calc(50% - 195px); top: 0;}
+.playertable_NEE {right: 5px; top: 0;}
+.playertable_E {right: 5px; top: 210px;}
+.playertablename {
+    height: 20px;
+    font-weight: bold;
+    text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white, 1px 1px 0px white;
+    white-space: nowrap;
+}
+.hand_count, .rank_count {
+    line-height: 117px;
+    text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white, 2px 2px 4px white;
+    text-align: center;
+    font-size: 50px;
+    font-weight: bold;
+    pointer-events: none;
+    user-select: none;
+}
+.hand_count.went_out {display: none;}
+.rank_count {display: none;}
+.rank_count.went_out {
+    display: block;
+    font-family: serif;
+    font-size: 65px;
+    color: white;
+    text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black, 2px 2px 4px black;
+}
+
+#played_card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    position: absolute;
+    text-align: center;
+    width: 200px;
+    height: 180px;
+    left: calc(50% - 115px);
+    top: 210px;
+    margin: 5px;
+    border-radius: 10px;
+    transition: background-color 500ms;
+}
+#played_card_container {
+    position: relative;
+    width: 200px;
+    height: 160px;
+    font-size: 25px;
+}
+
+#myhand_wrap {
+    position: relative;
+    width: 95%;
+    margin: 10px auto 0 auto;
+    border-radius: 10px;
+    font-weight: bold;
+}
+#myhand_rank {
+    position: absolute;
+    margin: auto;
+    width: calc(100% - 20px);
+    height: 144px;
+    line-height: 144px;
+    font-family: serif;
+    font-size: 65px;
+    color: white;
+    text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black, 2px 2px 4px black;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+}
+#myhand {margin-top: 5px;}
+#myhand_placeholder {display: inline-block; width: 0; height: 117px;}
+.passed, #myhand_wrap.went_out, .playertable.went_out {opacity: 0.6;}
+
+.cardspace {
+    position: absolute;
+    width: 84px;
+    height: 117px;
+}
+.card {
+    background-size: 1400% 400%;
+    box-shadow: 1px 1px 2px black;
+}
+.card:hover {z-index: 2;}
+.stock_card_border {
+    background-size: 1400% 400%;
+    box-shadow: 1px 1px 2px black;
+    line-height: 117px;
+    text-align: center;
+    font-size: 40px;
+    font-weight: bold;
+    user-select: none;
+}
+.card_1 {background-image: url('img/cards_1.png'); border-radius: 4px;}
+.card_2 {background-image: url('img/cards_2.png'); border-radius: 4px;}
+.card_3 {background-image: url('img/cards_3.png'); border-radius: 10px;}
+.card_back {background-position: 0% -200%;}
+.card_back.went_out {background: none; box-shadow: none;}
+.hand_card {position: relative;}

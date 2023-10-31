@@ -1,91 +1,246 @@
 <?php
-
 /**
- * Copyright (c) 2020. Quaresma.
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * Fixes and variants implementation: © ufm <tel2tale@gmail.com>
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
  */
-const OptGameDuration = 100;
-const OptSkipOn = 101;
-const OptRevolutionOn = 102;
-const OptJokersOn = 103;
-const OptMaxCardsPerPlayerHand = 104;
-const OptHighestCard = 105;
 
+$custom_only = ['type' => 'otheroption', 'id' => 114, 'value' => 100];
 $game_options = [
-    // note: game variant ID should start at 100 (ie: 100, 101, 102, ...). The maximum is 199.
-    OptGameDuration => [
-        'name' => totranslate('Duration of the game'),    
+    100 => [
+        'name' => totranslate('Target score'),
         'values' => [
-            1 => ['name' => totranslate('50 points') ],
-            2 => ['name' => totranslate('100 points') ],
-            3 => ['name' => totranslate('5 round max') ],
-            4 => ['name' => totranslate('10 round max') ]
-        ]
+            10 => ['name' => '10', 'tmdisplay' => '10'],
+            15 => ['name' => '15', 'tmdisplay' => '15'],
+            20 => ['name' => '20', 'tmdisplay' => '20'],
+        ],
     ],
-    OptSkipOn => [
-        'name' => totranslate('Skip'),
+    113 => [
+        'name' => totranslate('Scoring rule'),
         'values' => [
             0 => [
-                'name' => totranslate('Off'),
-                'description' => totranslate('You can\'t plays cards of the same rank as the previous player.')
+                'name' => totranslate('Positive scoring'),
+                'description' => totranslate('Each player scores points equal to the number of players they have beaten in the round. The game ends when someone reaches the target score.'),
+                'tmdisplay' => totranslate('Positive scoring'),
             ],
             1 => [
-                'name' => totranslate('On'),
-                'description' => totranslate('When a player plays the same number of cards of the same rank as the previous player skips the next person who would have played (excluding the best card 2 or 3 in case of revolution and jokers).')
-            ]
-        ]
+                'name' => totranslate('Negative scoring'),
+                'description' => totranslate('President gains 1 point bonus, each Citizen loses 1 point, Peasant loses 2 points, and Beggar loses 3 points. The game ends when someone drops to 0 points or below.'),
+                'tmdisplay' => totranslate('Negative scoring'),
+            ],
+        ],
+        'displaycondition' => [['type' => 'minplayers', 'value' => [3, 4, 5, 6, 7, 8]]],
     ],
-    OptRevolutionOn => [
+    114 => [
+        'name' => totranslate('Rule set'),
+        'values' => [
+            0 => [
+                'name' => totranslate('Full variant'),
+                'description' => totranslate('Activates all variants.'),
+                'tmdisplay' => totranslate('Full variant'),
+            ],
+            1 => [
+                'name' => totranslate('Vanilla'),
+                'description' => totranslate('Removes all variants.'),
+                'tmdisplay' => totranslate('Vanilla'),
+            ],
+            100 => [
+                'name' => totranslate('Custom'),
+                'description' => totranslate('Table creator can customize variant options.'),
+            ],
+        ],
+    ],
+    102 => [
         'name' => totranslate('Revolution'),
         'values' => [
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('Playing 4 or more cards reverses card ranks or cancels the rank reversal during the round.'),
+                'tmdisplay' => totranslate('Revolution'),
+            ],
+        ],
+        'displaycondition' => [$custom_only],
+        'default' => 1,
+    ],
+    103 => [
+        'name' => totranslate('Joker'),
+        'values' => [
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('1 Joker is added. The Joker can be used as the strongest single card which is unaffected by Revolutions, or can be mixed with other cards as a wild.'),
+                'tmdisplay' => totranslate('Enabled'),
+            ],
+        ],
+        'displaycondition' => [$custom_only],
+        'default' => 1,
+    ],
+    104 => [
+        'name' => totranslate('First player'),
+        'values' => [
             0 => [
-                'name' => totranslate('Off'),
-                'description' => totranslate('Playing 4 cards will not trigger (or cancel) Revolution.')
+                'name' => totranslate('Lowest player first'),
+                'description' => totranslate('From the second round, the lowest ranked player plays first.'),
+                'tmdisplay' => totranslate('Lowest player first'),
             ],
             1 => [
-                'name' => totranslate('On'),
-                'description' => totranslate('When a player plays 4 identical cards, Revolution is triggered and the value-order of all cards (except Jokers) is reversed - until another player plays 4 cards.')
-            ]
-        ]
+                'name' => totranslate('Highest player first'),
+                'description' => totranslate('From the second round, the highest ranked player plays first.'),
+                'tmdisplay' => totranslate('Highest player first'),
+            ],
+        ],
+        'displaycondition' => [$custom_only],
     ],
-    OptJokersOn => [
-        'name' => totranslate('Jokers'),
+    101 => [
+        'name' => totranslate('Same rank skip'),
         'values' => [
-            False => [
-                'name' => totranslate('Off'),
-                'description' => totranslate('No Jokers will be added to the deck')
+            0 => [
+                'name' => totranslate('Disabled'),
+                'description' => totranslate('The same combination of the same rank as the previous play cannot be played.'),
             ],
-            True => [
-                'name' => totranslate('On'),
-                'description' => totranslate('2 Jokers will be added to the deck; A Joker beats any hand (except a Joker) and is unaffected by Revolution')
-            ]
-        ]
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('A player who plays the same combination of the same rank as the previous play skips the next person who would have played.'),
+                'tmdisplay' => totranslate('Same rank skip'),
+            ],
+        ],
+        'displaycondition' => [$custom_only],
     ],
-    OptMaxCardsPerPlayerHand => [
-        'name' => totranslate('Max Number of Cards per Player'),
+    106 => [
+        'name' => totranslate('Same suit sequence'),
         'values' => [
-            14 => [
-                'name' => totranslate('Unlimited'),
-                'description' => totranslate('A full deck of cards will be used (plus optionally Jokers); this translates to up to 14 cards per player in a 4-player game')
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('3 or more cards of consecutive rank and the same suit can be played as a valid combination. If applicable, all special effects of cards in the combination are applied.'),
+                'tmdisplay' => totranslate('Same suit sequence'),
             ],
-            8 => [
-                'name' => totranslate('8'),
-                'description' => totranslate('Players will start with up to 8 hands in hand. Irrelevant for 7 and 8 player games, as there are not enough cards in a deck to deal that many anyway')
-            ],
-        ]
+        ],
+        'displaycondition' => [$custom_only],
+        'default' => 1,
     ],
-    OptHighestCard => [
-        'name' => totranslate('Highest card in the deck'),
+    112 => [
+        'name' => totranslate('Suit lock'),
         'values' => [
-            15 => [
-                'name' => totranslate('2'),
-                'description' => totranslate('The 2 is the highest card, then Ace, King etc.')
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('If a player plays a combination of the same suit as the previous play, all further plays during the trick must be the same suit combination. The Joker cannot activate a suit lock, but can be used as the required suit during a locked trick.'),
+                'tmdisplay' => totranslate('Suit lock'),
             ],
-            14 => [
-                'name' => totranslate('Ace'),
-                'description' => totranslate('Standard card ranking, with Ace highest, 2 lowest')
+        ],
+        'displaycondition' => [$custom_only],
+        'default' => 1,
+    ],
+    107 => [
+        'name' => totranslate('Ender 8'),
+        'values' => [
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('Playing one or more 8s ends the trick immediately.'),
+                'tmdisplay' => totranslate('Ender 8'),
             ],
-        ]
-    ]
+        ],
+        'displaycondition' => [$custom_only],
+        'default' => 1,
+    ],
+    108 => [
+        'name' => totranslate('Reversing 9'),
+        'values' => [
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('Playing one or more 9s reverses the turn order permanently.'),
+                'tmdisplay' => totranslate('Reversing 9'),
+            ],
+        ],
+        'displaycondition' => [$custom_only, ['type' => 'minplayers', 'value' => [3, 4, 5, 6, 7, 8]]],
+        'default' => 1,
+    ],
+    109 => [
+        'name' => totranslate('Jack back'),
+        'values' => [
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('Playing one or more Jacks reverses card ranks or cancels the rank reversal during the trick.'),
+                'tmdisplay' => totranslate('Jack back'),
+            ],
+        ],
+        'displaycondition' => [$custom_only],
+        'default' => 1,
+    ],
+    110 => [
+        'name' => totranslate('Illegal finish'),
+        'values' => [
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('A players went out by playing 2 when card ranks are normal, 3 when card ranks are reversed, 8 when Ender 8 option is active, or the Joker, is disqualified and is ranked the lowest. If several players are disqualified by this rule in the same round, the player who went out later is ranked higher.'),
+                'tmdisplay' => totranslate('Illegal finish'),
+            ],
+        ],
+        'displaycondition' => [$custom_only],
+        'default' => 1,
+    ],
+    111 => [
+        'name' => totranslate('Downfall'),
+        'values' => [
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('If the President (or the Minister in 3-player) fails to get the first place, the player is disqualified immediately and is ranked the lowest unless someone else is disqualified by illegal finish.'),
+                'tmdisplay' => totranslate('Downfall'),
+            ],
+        ],
+        'displaycondition' => [$custom_only, ['type' => 'minplayers', 'value' => [3, 4, 5, 6, 7, 8]]],
+        'default' => 1,
+    ],
+    105 => [
+        'name' => totranslate('Automatic turn skip'),
+        'values' => [
+            0 => ['name' => totranslate('Disabled')],
+            1 => [
+                'name' => totranslate('Enabled'),
+                'description' => totranslate('The game checks only public information to determine whether a player has any chance of beating the current combination regardless of the cards in hand. If all relevant higher cards are discarded already, the turn is skipped automatically.'),
+                'tmdisplay' => totranslate('Automatic turn skip'),
+            ],
+        ],
+        'level' => 'additional',
+        'default' => 1,
+    ],
 ];
 
-
+$game_preferences = [
+    100 => [
+        'name' => totranslate('Card style'),
+        'needReload' => true,
+        'values' => [
+            1 => ['name' => totranslate('Small indexes')],
+            2 => ['name' => totranslate('Large indexes')],
+            3 => ['name' => totranslate('Cartoonish')],
+        ],
+    ],
+    101 => [
+        'name' => totranslate('Overlap cards in hand'),
+        'needReload' => true,
+        'values' => [
+            1 => ['name' => totranslate('Disabled')],
+            2 => ['name' => totranslate('Enabled')],
+        ],
+    ],
+    102 => [
+        'name' => totranslate('Play sound effects'),
+        'needReload' => true,
+        'values' => [
+            1 => ['name' => totranslate('Yes')],
+            2 => ['name' => totranslate('No')],
+        ],
+    ],
+];

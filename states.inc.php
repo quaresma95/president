@@ -1,119 +1,99 @@
 <?php
 /**
- * Copyright (c) 2020. Quaresma.
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * Fixes and variants implementation: © ufm <tel2tale@gmail.com>
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
  */
 
-$machinestates = array(
-
-    // The initial state. Please do not modify.
-    1 => array(
+$machinestates = [
+    1 => [
         "name" => "gameSetup",
         "description" => "",
         "type" => "manager",
         "action" => "stGameSetup",
-        "transitions" => array( "newHand" => 20 )
-    ),
+        "transitions" => ["" => 20]
+    ],
 
-    /// New hand
-    20 => array(
-        "name" => "newHand",
-        "description" => "",
+    20 => [
+        "name" => "startRound",
+        "description" => '',
         "type" => "game",
-        "action" => "stNewHand",
+        "action" => "stStartRound",
         "updateGameProgression" => true,
-        "transitions" => array( "playerTurn" => 31, "presidentSwapTurn" => 50)
-    ),
+        "transitions" => ["playerTurn" => 31, "presidentGive" => 50, "ministerGive" => 52]
+    ],
 
-    // Trick
-    30 => array(
-        "name" => "newRound",
-        "description" => "",
+    50 => [
+        "name" => "presidentGive",
+        "description" => clienttranslate('${actplayer} must give 2 cards to ${otherplayer}'),
+        "descriptionmyturn" => clienttranslate('${you} must give 2 cards to ${otherplayer}'),
+        "type" => "activeplayer",
+        "args" => "argGiveCard",
+        "possibleactions" => ["giveCard"],
+        "transitions" => ["" => 51]
+    ],
+
+    51 => [
+        "name" => "giveEnd",
+        "description" => '',
         "type" => "game",
-        "action" => "stNewRound",
-        "transitions" => array( "playerTurn" => 31)
-    ),
+        "action" => "stGiveEnd",
+        "transitions" => ["ministerGive" => 52, "playerTurn" => 31]
+    ],
 
-    31 => array(
+    52 => [
+        "name" => "ministerGive",
+        "description" => clienttranslate('${actplayer} must give a card to ${otherplayer}'),
+        "descriptionmyturn" => clienttranslate('${you} must give a card to ${otherplayer}'),
+        "type" => "activeplayer",
+        "args" => "argGiveCard",
+        "possibleactions" => ["giveCard"],
+        "transitions" => ["" => 51]
+    ],
+
+    31 => [
         "name" => "playerTurn",
-        "description" => clienttranslate('${actplayer} must play or pass'),
-        "descriptionmyturn" => clienttranslate('${you} must play or pass'),
+        "description" => clienttranslate('${actplayer} may play a valid combination'),
+        "descriptionmyturn" => clienttranslate('${you} may play a valid combination'),
         "type" => "activeplayer",
-        "possibleactions" => array( "playCard", "passTurn" ),
-        "transitions" => array( "newRound" => 30, "nextPlayer" => 32, "passTurn" => 33 )
-    ),
+        "args" => "argPlayerTurn",
+        "possibleactions" => ["playCard", "passTurn"],
+        "transitions" => ["" => 32]
+    ],
 
-    32 => array(
+    32 => [
         "name" => "nextPlayer",
-        "description" => "",
+        "description" => '',
         "type" => "game",
         "action" => "stNextPlayer",
-        "transitions" => array( "playerTurn" => 31, "newRound" => 30, "endHand" => 40 )
-    ),
+        "transitions" => ["nextPlayer" => 31, "autoPlay" => 32, "autoPass" => 32, "endTrick" => 33, "endRound" => 40]
+    ],
 
-    33 => array(
-        "name" => "passTurn",
-        "description" => "",
+    33 => [
+        "name" => "endTrick",
+        "description" => '',
         "type" => "game",
-        "action" => "stNextPlayer",
-        "transitions" => array( "nextPlayer" => 31, "newRound" => 30, "endHand" => 40 )
-    ),
+        "action" => "stEndTrick",
+        "transitions" => ["nextTrick" => 31, "autoPlay" => 32, "endRound" => 40]
+    ],
 
-    // End of the hand (scoring, etc...)
-    40 => array(
-        "name" => "endHand",
-        "description" => "",
+    40 => [
+        "name" => "endRound",
+        "description" => '',
         "type" => "game",
-        "action" => "stEndHand",
-        "transitions" => array( "newHand" => 20, "endGame" => 99 )
-    ),
+        "action" => "stEndRound",
+        "transitions" => ["nextRound" => 20, "endGame" => 99]
+    ],
 
-    50 => array(
-        "name" => "presidentSwapTurn",
-        "description" => clienttranslate("Other players must swap cards"),
-        "descriptionmyturn" => clienttranslate('${you} must swap 2 cards'),
-        "possibleactions" => array( "swapCards"),
-        "type" => "activeplayer",
-        "args" => "argSwapCards",
-        "transitions" => array( "endPresidentSwap" => 51)
-    ),
-
-    51 => array(
-        "name" => "endPresidentSwap",
-        "description" => "",
-        "type" => "game",
-        "action" => "stSwapCards",
-        "transitions" => array( "primeMinisterSwapTurn" => 52)
-    ),
-
-    52 => array(
-        "name" => "primeMinisterSwapTurn",
-        "description" => clienttranslate("Other players must swap cards"),
-        "descriptionmyturn" => clienttranslate('${you} must swap 1 card'),
-        "possibleactions" => array( "swapCards"),
-        "type" => "activeplayer",
-        "args" => "argSwapCards",
-        "transitions" => array( "endPrimeMinisterSwapTurn" => 53)
-    ),
-
-    53 => array(
-        "name" => " ",
-        "description" => "",
-        "type" => "game",
-        "action" => "stSwapCards",
-        "transitions" => array( "playerTurn" => 31)
-    ),
-
-    // Final state.
-    // Please do not modify (and do not overload action/args methods).
-    99 => array(
+    99 => [
         "name" => "gameEnd",
         "description" => clienttranslate("End of game"),
         "type" => "manager",
         "action" => "stGameEnd",
         "args" => "argGameEnd"
-    )
-
-);
-
-
-
+    ]
+];
