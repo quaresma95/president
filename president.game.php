@@ -1,80 +1,53 @@
 <?php
 /**
- * Copyright (c) 2020. Quaresma.
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * Fixes and variants implementation: © ufm <tel2tale@gmail.com>
+ * 
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * ----
  */
 
-require_once( APP_GAMEMODULE_PATH.'module/table/table.game.php' );
+require_once(APP_GAMEMODULE_PATH.'module/table/table.game.php');
 
-class GS {
-    public const numPlayers = "nbPlayers";
-    public const isFirstRound = "firstRound";
-    public const finishOrder = "finishOrder";
-    public const defaultScore = "defaultScore";
-    public const lastCardValue = "lastCardValue";
-    public const isRevolutionTrick = "revolutionTrick";
-    public const currentHandType = "currentHandType";
-    public const lastPlayerPlayedId = "lastPlayerPlayedId";
-    public const presidentSwapCards = "presidentSwapCards";
-    public const lowestCardValue = "lowestCardValue";
-
-    public const gameDuration = "gameDuration";
-    public const optSkipOn = "optSkipOn";
-    public const optRevolutionOn = "optRevolutionOn";
-    public const optJokersOn = "optJokersOn";
-    public const optMaxCardsPerPlayerHand = "optMaxCardsPerPlayerHand";
-    public const optHighestCard = "optHighestCard";
-}
-
-class Opt {
-    public const gameDuration = 100;
-    public const skipOn = 101;
-    public const revolutionOn = 102;
-    public const jokersOn = 103;
-    public const maxCardsPerPlayerHand = 104;
-    public const highestCard = 105;
-}
-
-class President extends Table
-{
-    
-	function __construct( )
-	{
+class President extends Table {
+    function __construct() {
         // Your global variables labels:
-        //  Here, you can assign labels to global variables you are using for this game.
-        //  You can use any number of global variables with IDs between 10 and 99.
-        //  If your game has options (variants), you also have to associate here a label to
-        //  the corresponding ID in gameoptions.inc.php.
+        // Here, you can assign labels to global variables you are using for this game.
+        // You can use any number of global variables with IDs between 10 and 99.
+        // If your game has options (variants), you also have to associate here a label to
+        // the corresponding ID in gameoptions.inc.php.
         // Note: afterwards, you can get/set the global variables with getGameStateValue/setGameStateInitialValue/setGameStateValue
         parent::__construct();
-        
         self::initGameStateLabels([
-            GS::numPlayers => 10,
-            GS::isFirstRound => 11,
-            GS::finishOrder => 12,
-            GS::defaultScore => 13,
-            GS::lastCardValue => 14,
-            GS::isRevolutionTrick => 15,
-            GS::currentHandType => 16,
-            GS::lastPlayerPlayedId => 17,
-            GS::presidentSwapCards => 18,
-            GS::lowestCardValue => 19,
-            GS::gameDuration => Opt::gameDuration,
-            GS::optSkipOn => Opt::skipOn,
-            GS::optRevolutionOn => Opt::revolutionOn,
-            GS::optJokersOn => Opt::jokersOn,
-            GS::optMaxCardsPerPlayerHand => Opt::maxCardsPerPlayerHand,
-            GS::optHighestCard => Opt::highestCard,
+            "regular_revolution" => 15,
+            "temporary_revolution" => 20,
+            "reversed" => 21,
+            "skip_turn" => 22,
+            "suit_lock_prep" => 23,
+            "suit_lock_complete" => 24,
+            "target_score" => 100,
+            "scoring_rule" => 113,
+            "rule_set" => 114,
+            "revolution" => 102,
+            "joker" => 103,
+            "first_player_mode" => 104,
+            "same_rank_skip" => 101,
+            "sequence" => 106,
+            "suit_lock" => 112,
+            "ender_8" => 107,
+            "reversing_9" => 108,
+            "jack_back" => 109,
+            "illegal_finish" => 110,
+            "downfall" => 111,
+            "automatic_skip" => 105,
         ]);
-
-        $this->cards = self::getNew( "module.common.deck" );
-        $this->cards->init( "card" );
+        $this->cards = self::getNew("module.common.deck");
+        $this->cards->init("card");
     }
-	
-    protected function getGameName( )
-    {
-		// Used for translations and stuff. Please do not modify.
-        return "president";
-    }	
+
+    protected function getGameName() {return "president";}	
 
     /*
         setupNewGame:
@@ -83,98 +56,86 @@ class President extends Table
         In this method, you must setup the game according to the game rules, so that
         the game is ready to be played.
     */
-    protected function setupNewGame( $players, $options = [] )
-    {    
+
+    protected function setupNewGame($players, $options = []) {    
         // Set the colors of the players with HTML color code
         // The default below is red/green/blue/orange/brown
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
         $gameinfos = self::getGameinfos();
         $default_colors = $gameinfos['player_colors'];
-        $numberOfPlayers = count($players);
-
-        self::setGameStateInitialValue(GS::isFirstRound, 1);
-        self::setGameStateInitialValue(GS::finishOrder, 0);
-        self::setGameStateInitialValue(GS::defaultScore, 50);
-        self::setGameStateInitialValue(GS::lastCardValue, 0);
-        self::setGameStateInitialValue(GS::currentHandType, 0);
-        self::setGameStateInitialValue(GS::isRevolutionTrick, 0);
-        self::setGameStateInitialValue(GS::lastPlayerPlayedId, 0);
-        self::setGameStateInitialValue(GS::presidentSwapCards, 0);
-        self::setGameStateInitialValue(GS::numPlayers, $numberOfPlayers);
-
+ 
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
-
-        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
-        self::setGameStateValue(GS::defaultScore, $this->game_duration[$gameDurationOption]['default_score']);
-
+        $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar) VALUES ";
         $values = [];
-        $default_score = self::getGameStateValue(GS::defaultScore);
-
-        foreach( $players as $player_id => $player )
-        {
-            $color = array_shift( $default_colors );
-            $values[] = "('".$player_id."','$color','".$player['player_canal']."','".addslashes( $player['player_name'] )."','".addslashes( $player['player_avatar'] )."','$default_score')";
+        foreach ($players as $player_id => $player) {
+            $color = array_shift($default_colors);
+            $values[] = "('".$player_id."','$color','".$player['player_canal']."','".addslashes($player['player_name'])."','".addslashes($player['player_avatar'])."')";
         }
-
-        $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar, player_score) VALUES ";
-        $sql .= implode( $values, ',' ); //FIXME order
-        self::DbQuery( $sql );
-
-        self::reattributeColorsBasedOnPreferences( $players, $gameinfos['player_colors'] );
+        $sql .= implode(',', $values);
+        self::DbQuery($sql);
+        self::reattributeColorsBasedOnPreferences($players, $gameinfos['player_colors']);
         self::reloadPlayersBasicInfos();
-
+        
         /************ Start the game initialization *****/
 
-        // Init global values with their initial values
-        //self::setGameStateInitialValue( 'my_first_global_variable', 0 );
-        
-        // Init game statistics
-        // (note: statistics used in this file must be defined in your stats.inc.php file)
-        self::initStat('table', 'Hand_number', 0);
-        self::initStat('player', 'player_pass_turn', 0);
-        self::initStat('player', 'player_round_win', 0);
-        self::initStat('player', 'player_revolution', 0);
-        self::initStat('player', 'player_beggar_stat', 0);
-        self::initStat('player', 'player_president_stat', 0);
-
-        // Create deck, starting from the highest card
-        $cards = [];
-
-        $optionJokersOn = $this->gamestate->table_globals[Opt::jokersOn];
-        if ($optionJokersOn) {
-            foreach ($this->special_cards as $special_card) {
-                $cards [] = [
-                    'type' => $special_card['type'],
-                    'type_arg' => $special_card['value'],
-                    'nbr' => $special_card['nbr']
-                ];
-            }
-        }
-
-        $highestCardToInsert = $this->getHighestCardValue();
-        // If the Highest card is 15 (2), the lowest should be 3, otherwise 2
-        $lowestCardToInsert = $highestCardToInsert == 15 ? 3 : 2;
-
-        $maxNumberOfCardsPerPlayer = $this->gamestate->table_globals[Opt::maxCardsPerPlayerHand];
-        $maxNumberOfCards = $maxNumberOfCardsPerPlayer * $numberOfPlayers;
-
-        for ($value = $highestCardToInsert; $value >= $lowestCardToInsert; $value --) {
-            // spade, heart, diamond, club
-            foreach ( $this->colors as $color_id => $color ) {
-                $cards [] = ['type' => $color_id,'type_arg' => $value,'nbr' => 1 ];
-                if (count($cards) >= $maxNumberOfCards)
-                    break;
-            }
-            if (count($cards) >= $maxNumberOfCards)
+        // Rule set initialization
+        $rule_set = self::getGameStateValue("rule_set");
+        switch ($rule_set) {
+            default:
+                self::setGameStateInitialValue("revolution", 1);
+                self::setGameStateInitialValue("joker", 1);
+                self::setGameStateInitialValue("first_player_mode", 0);
+                self::setGameStateInitialValue("same_rank_skip", 1);
+                self::setGameStateInitialValue("sequence", 1);
+                self::setGameStateInitialValue("suit_lock", 1);
+                self::setGameStateInitialValue("ender_8", 1);
+                self::setGameStateInitialValue("reversing_9", 1);
+                self::setGameStateInitialValue("jack_back", 1);
+                self::setGameStateInitialValue("illegal_finish", 1);
+                self::setGameStateInitialValue("downfall", 1);
+                break;
+            case 1:
+                self::setGameStateInitialValue("revolution", 0);
+                self::setGameStateInitialValue("joker", 0);
+                self::setGameStateInitialValue("first_player_mode", 1);
+                self::setGameStateInitialValue("same_rank_skip", 0);
+                self::setGameStateInitialValue("sequence", 0);
+                self::setGameStateInitialValue("suit_lock", 0);
+                self::setGameStateInitialValue("ender_8", 0);
+                self::setGameStateInitialValue("reversing_9", 0);
+                self::setGameStateInitialValue("jack_back", 0);
+                self::setGameStateInitialValue("illegal_finish", 0);
+                self::setGameStateInitialValue("downfall", 0);
                 break;
         }
+        if (count($players) == 2) {
+            self::setGameStateValue("scoring_rule", 1);
+            self::setGameStateValue("reversing_9", 0);
+            self::setGameStateValue("downfall", 0);
+        }
+        if (self::getGameStateValue('scoring_rule')) $this->DbQuery("UPDATE player SET player_score = ".self::getGameStateValue('target_score'));
 
-        $lowestCardInDeck = end($cards);
-        $lowestCardValue = $lowestCardInDeck['type_arg'];
-        self::setGameStateInitialValue(GS::lowestCardValue, $lowestCardValue);
+        // Init game statistics
+        self::initStat('table', 'round_number', 0);
+        self::initStat('player', 'first_rank', 0);
+        if (count($players) > 3) {
+            self::initStat('player', 'second_rank', 0);
+            self::initStat('player', 'second_last_rank', 0);
+        }
+        self::initStat('player', 'last_rank', 0);
+        if (self::getGameStateValue('revolution')) self::initStat('player', 'revolution', 0);
+        if (self::getGameStateValue('suit_lock')) self::initStat('player', 'suit_lock', 0);
+        if (self::getGameStateValue('illegal_finish')) self::initStat('player', 'illegal_finish', 0);
+        if (self::getGameStateValue('downfall')) self::initStat('player', 'downfall', 0);
 
-        $this->cards->createCards( $cards, 'deck' );
+        // Create cards
+        $cards = [];
+        for ($color = 0; $color < 4; $color++)
+            for ($value = 1; $value <= 13; $value++)
+                $cards[] = ['type' => $color, 'type_arg' => $value, 'nbr' => 1];
+        $cards[] = ['type' => 4, 'type_arg' => 0, 'nbr' => 1];
+        $this->cards->createCards($cards, 'deck');
 
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
@@ -182,884 +143,1052 @@ class President extends Table
         /************ End of the game initialization *****/
     }
 
-    protected function getHighestCardValue()
-    {
-        return $this->gamestate->table_globals[Opt::highestCard];
-    }
-
-    protected function getLowestCardValue()
-    {
-        return self::getGameStateValue(GS::lowestCardValue);
-    }
-
     /*
         getAllDatas: 
         
-        Gather all informations about current game situation (visible by the current player).
+        Gather all information about current game situation (visible by the current player).
         
         The method is called each time the game interface is displayed to a player, ie:
         _ when the game starts
         _ when a player refreshes the game page (F5)
     */
-    protected function getAllDatas()
-    {
+
+    protected function getAllDatas() {
         $result = [];
-    
-        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
-        
-        $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
+        $current_player_id = self::getCurrentPlayerId(); // !! We must only return information visible by this player !!
     
         // Get information about players
         // Note: you can retrieve some extra field you added for "player" table in "dbmodel.sql" if you need it.
-        $sql = "SELECT player_id id, player_score score, player_has_passed pass, player_role role FROM player";
-        $result['players'] = self::getCollectionFromDb( $sql );
+        $result['players'] = self::getCollectionFromDb("SELECT player_id id, player_score score, player_has_passed pass, player_role role FROM player");
+  
+        // Gather all information about current game situation (visible by player $current_player_id).
+        $result['hand_count'] = $this->cards->countCardsByLocationArgs('hand');
+        $result['hand'] = $this->cards->getPlayerHand($current_player_id);
+        $result['table_combination'] = $this->evaluateCombination($this->cards->getCardsInLocation('cardsontable'));
 
-        $result['currentHandType'] = self::getGameStateValue(GS::currentHandType);
-        $result['currentOrder'] = self::getGameStateValue(GS::isRevolutionTrick);
+        $result['regular_revolution'] = self::getGameStateValue("regular_revolution");
+        $result['temporary_revolution'] = self::getGameStateValue("temporary_revolution");
+        $result['reversed'] = self::getGameStateValue("reversed");
+        $result['scoring_rule'] = self::getGameStateValue("scoring_rule");
+        $result['target_score'] = self::getGameStateValue("target_score");
+        $result['revolution'] = self::getGameStateValue("revolution");
+        $result['sequence'] = self::getGameStateValue("sequence");
+        $result['suit_lock'] = self::getGameStateValue("suit_lock");
+        $result['suit_lock_complete'] = self::getGameStateValue("suit_lock_complete");
+        $result['ender_8'] = self::getGameStateValue("ender_8");
+        $result['reversing_9'] = self::getGameStateValue("reversing_9");
+        $result['jack_back'] = self::getGameStateValue("jack_back");
+        $result['illegal_finish'] = self::getGameStateValue("illegal_finish");
 
-        // Cards in player hand
-        $result['nb_players'] = self::getGameStateValue(GS::numPlayers);
-        $result['nb_round'] = self::getStat('Hand_number'); // Counds like an anti-pattern to use stat as game data
-
-        $result['highestCard'] = $this->gamestate->table_globals[Opt::highestCard];
-
-        if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
-            $result['max_round'] = $this->game_duration[$gameDurationOption]['max_round'];
-        }
-
-        // Cards in player hand
-        $sql = <<<EOT
-           SELECT `card_location_arg`, count(*) as `nb_cards`
-           FROM `card` 
-           WHERE `card_location` = 'hand' 
-           GROUP by card_location_arg;
-EOT;
-
-        $result['nb_cards'] = self::getCollectionFromDb( $sql );
-
-        $result['icons_per_position'] = $this->icons_per_position;
-
-        // Cards in player hand
-        $result['hand'] = $this->cards->getCardsInLocation( 'hand', $current_player_id );
-
-        // Cards played on the table
-        $cards_on_table = [];
-        $all_cards_played = $this->cards->getCardsInLocation( 'cardsontable', null, 'card_type_arg');
-
-        if (!empty($all_cards_played) && $result['currentHandType'] > 0) {
-            while (!empty($all_cards_played)) {
-                $cards_left = array_splice($all_cards_played, $result['currentHandType']);
-                $cards_on_table[] = $all_cards_played;
-                $all_cards_played = $cards_left;
-            }
-            $result['cardsontable'] = $cards_on_table;
-        }
-
+        $result['colors'] = $this->colors;
+        $result['values_label'] = $this->values_label;
+        $result['audio_list'] = $this->audio_list;
+  
         return $result;
     }
 
     /*
         getGameProgression:
-        
+
         Compute and return the current game progression.
-        The number returned must be an integer beween 0 (=the game just started) and
+        The number returned must be an integer between 0 (=the game just started) and
         100 (= the game is finished or almost finished).
-    
+
         This method is called each time we are in a game state with the "updateGameProgression" property set to true 
         (see states.inc.php)
     */
-    function getGameProgression()
-    {
-        $state = $this->gamestate->state();
-        if( $state['name'] == 'gameEnd' ) {
-            $progression = 100;
-        } else {
-            $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
-            if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
-                $actual_round = self::getStat('Hand_number') - 1;
-                $max_round = $this->game_duration[$gameDurationOption]['max_round'];
-                if ($max_round == 5) {
-                    $actual_round = $actual_round * 2;
-                }
-                $progression = $actual_round * 10;
-            } else {
-                $default_score = self::getGameStateValue(GS::defaultScore);
-                $minScore = self::getUniqueValueFromDB( "SELECT MIN(player_score) as min FROM player" );
-                if ($minScore == $default_score) {
-                    $progression = 0;
-                } else {
-                    if ($default_score == 50) {
-                        $progression = 100 - ($minScore * 2);
-                    } else {
-                        $progression = 100 - $minScore;
-                    }
-                }
-            }
-        } 
 
-
-        return $progression;
+    function getGameProgression() {
+        $target_score = self::getGameStateValue("target_score");
+        if (self::getGameStateValue("scoring_rule")) return floor(($target_score - self::getUniqueValueFromDb("SELECT MIN(player_score) FROM player")) / $target_score * 100);
+        else return floor(self::getUniqueValueFromDb("SELECT MAX(player_score) FROM player") / $target_score * 100);
     }
-
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Utility functions
 ////////////    
-    private function setUpNewRound() {
-        $best_value_player_id = self::getGameStateValue(GS::lastPlayerPlayedId);
-        // Active this player => he's the one who starts the next trick
 
+    /*
+        In this space, you can put any utility methods useful for your game logic
+    */
 
-        // Move all cards to "cardswon" of the given player
-        $this->cards->moveAllCardsInLocation('cardsontable', 'cardswon', null, $best_value_player_id);
-
-        // Reset global before new round
-        self::setGameStateValue(GS::lastCardValue, 0);
-        self::setGameStateValue(GS::currentHandType, 0);
-        self::setGameStateValue(GS::lastPlayerPlayedId, 0);
-
-        $sql = "UPDATE player SET player_has_passed='0'";
-        self::DbQuery( $sql );
-
-        // Notify
-        // Note: we use 2 notifications here in order we can pause the display during the first notification
-        //  before we move all cards to the winner (during the second)
-
-        // add stat round won
-        self::incStat(1, 'player_round_win', $best_value_player_id);
-
-        $players = self::loadPlayersBasicInfos();
-        self::notifyAllPlayers( 'roundWin', clienttranslate('${player_name} wins the trick'), [
-            'player_id' => $best_value_player_id,
-            'player_name' => $players[ $best_value_player_id ]['player_name']
-        ]);
+    function dbGetScore ($player_id) {return $this->getUniqueValueFromDB("SELECT player_score FROM player WHERE player_id = '$player_id'");}
+    function dbSetScore ($player_id, $count) {$this->DbQuery("UPDATE player SET player_score = '$count' WHERE player_id = '$player_id'");}
+    function dbIncScore ($player_id, $inc) {
+        $count = $this->dbGetScore($player_id);
+        if ($inc != 0) {
+            $count += $inc;
+            $this->dbSetScore($player_id, $count);
+        }
+        return $count;
     }
 
-    private function getNextActivePlayer() {
-        $i = 0;
-        $nextActivePlayerId = "";
-        $playerId = self::getActivePlayerId();
-        $tableOrder = self::getNextPlayerTable();
-        $nbPlayers = self::getGameStateValue(GS::numPlayers);
-        $players = self::getCollectionFromDb( "SELECT player_id id, player_has_passed pass, player_role role FROM player" );
+    function sortCards ($a, $b): int {return ($a['type_arg'] ?: 20) * 100 + $a['type'] <=> ($b['type_arg'] ?: 20) * 100 + $b['type'];}
+    function sortCardsByRank ($a, $b): int {return ($b['type_arg'] ?: 20) * 100 + $b['type'] <=> ($a['type_arg'] ?: 20) * 100 + $a['type'];}
 
-
-        while ($nbPlayers > $i) {
-            $playerId = $tableOrder [$playerId];
-            if ($players[$playerId]['pass'] == 0 && !empty($this->cards->getCardsInLocation( 'hand', $playerId ))) {
-                $nextActivePlayerId = $playerId;
-                break;
-            }
-            $i++;
-        }
-
-        if (empty($nextActivePlayerId)) {
-            $nextActivePlayerId = self::getGameStateValue(GS::lastPlayerPlayedId);
-        }
-
-        return $nextActivePlayerId;
+    function getSurvivingNextPlayer ($player_id) {
+        $remaining_players = array_keys($this->cards->countCardsByLocationArgs('hand'));
+        $reversed = self::getGameStateValue("reversed");
+        $next_player = $reversed ? self::getPlayerBefore($player_id) : self::getPlayerAfter($player_id);
+        while (!in_array($next_player, $remaining_players) && $next_player != $player_id)
+            $next_player = $reversed ? self::getPlayerBefore($next_player) : self::getPlayerAfter($next_player);
+        return $next_player;
     }
 
-    private function checkHand($cards) {
-        $error = false;
-        $optionSkipEnabled = $this->gamestate->table_globals[Opt::skipOn] == 1 ? True : False;
-        $lastCardValue = self::getGameStateValue(GS::lastCardValue);
-        $currentHandType = self::getGameStateValue(GS::currentHandType);
-        $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
-
-        if (empty($cards)) {
-            $error = true;
-        } else {
-            $card = current($cards);
-            // check if last card is joker
-            if (in_array($lastCardValue, [933, 934])) {
-                $error = true;
-            } elseif (count($cards) != $currentHandType && $card['type'] != 5) {
-                $error = true;
-            } elseif ($lastCardValue) {
-                if ($currentOrder == 0) {
-                    if ($lastCardValue > $card['type_arg']) {
-                        $error = true;
-                    } else if ($lastCardValue == $card['type_arg']) {
-                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $this->getHighestCardValue()])) || !$optionSkipEnabled) {
-                            $error = true;
-                        }
-                    }
+    function evaluateCombination ($cards): array {
+        if (!$cards) return [];
+        else {
+            $current_revolution_status = (bool)self::getGameStateValue("regular_revolution") ^ (bool)self::getGameStateValue("temporary_revolution");
+            $multiplier = $current_revolution_status ? -1 : 1;
+            $jokers = [];
+            $suit_list = [];
+            $value_list = [];
+            $card_list = [];
+            foreach ($cards as $key => $card) {
+                if ($card['type'] == 4) {
+                    $jokers[] = $card;
+                    unset($cards[$key]);
                 } else {
-                    if ($lastCardValue < $card['type_arg'] && !in_array($card['type_arg'], [933, 934])) {
-                        $error = true;
-                    } else if ($lastCardValue == $card['type_arg']) {
-                        if (($optionSkipEnabled && in_array($card['type_arg'], [933, 934, $this->getLowestCardValue()])) || !$optionSkipEnabled) {
-                            $error = true;
-                        }
-                    }
+                    if (isset($value_list[$card['type_arg']])) $value_list[$card['type_arg']]++;
+                    else $value_list[$card['type_arg']] = 1;
+                    if (isset($suit_list[$card['type']])) $suit_list[$card['type']]++;
+                    else $suit_list[$card['type']] = 1;
+                    $card_list[$card['type_arg']][] = $card;
                 }
             }
-        } 
-
-        return $error;
-    }
-
-    private function checkEndGame() {
-        $res = false;
-        if ($this->cards->countCardInLocation('hand') == 0) {
-            $res = true;
+            foreach ($card_list as $key => $list) usort($card_list[$key], [$this, "sortCards"]);
+            if (!$value_list) return ['type' => 0, 'value' => 14, 'card_list' => $jokers];
+            else if (count($value_list) == 1) {
+                usort($cards, [$this, "sortCards"]);
+                return ['type' => 0, 'value' => array_flip($value_list)[count($cards)] * $multiplier, 'card_list' => array_merge($cards, $jokers)];
+            } else if (count($suit_list) == 1 && count($value_list) == count($cards) && (count($cards) + count($jokers)) >= 3 && (count($cards) + count($jokers)) <= 13) {
+                if ($current_revolution_status) krsort($value_list);
+                else ksort($value_list);
+                $remaining_jokers = count($jokers);
+                $current_value = null;
+                $new_card_list = [];
+                foreach ($value_list as $key => $value) {
+                    if (!isset($current_value)) {
+                        $current_value = $key;
+                        $new_card_list = [$card_list[$key][0]];
+                    } else if ($key != $current_value + $multiplier) {
+                        $gap = ($key - $current_value) * $multiplier - 1;
+                        if ($gap <= $remaining_jokers) {
+                            $remaining_jokers -= $gap;
+                            $current_value = $key;
+                            for ($m = 0; $m < $gap; $m++) {
+                                $new_card = array_shift($jokers);
+                                $new_card_list[] = $new_card;
+                            }
+                            $new_card_list[] = $card_list[$key][0];
+                        } else {
+                            $current_value = null;
+                            break;
+                        }
+                    } else {
+                        $current_value = $key;
+                        $new_card_list[] = $card_list[$key][0];
+                    }
+                }
+                if ($current_value) {
+                    if ($remaining_jokers) {
+                        if ($current_revolution_status) {
+                            while ($remaining_jokers > 0 && $current_value > 1) {
+                                $remaining_jokers--;
+                                $current_value--;
+                                $new_card = array_shift($jokers);
+                                $new_card_list[] = $new_card;
+                            }
+                            if ($remaining_jokers) $new_card_list = array_merge($jokers, $new_card_list);
+                        } else {
+                            while ($remaining_jokers > 0 && $current_value < 13) {
+                                $remaining_jokers--;
+                                $current_value++;
+                                $new_card = array_shift($jokers);
+                                $new_card_list[] = $new_card;
+                            }
+                            if ($remaining_jokers) $new_card_list = array_merge($jokers, $new_card_list);
+                        }
+                        return ['type' => 1, 'value' => $current_value * $multiplier, 'card_list' => $new_card_list];
+                    } else return ['type' => 1, 'value' => $current_value * $multiplier, 'card_list' => $new_card_list];
+                } else return [];
+            } else return [];
         }
-        $players_in_game = 0;
-        $hands = $this->cards->countCardsByLocationArgs( 'hand' );
-        foreach ($hands as $hand) {
-            if ($hand > 0) {
-                $players_in_game++;
-            }
-            if ($players_in_game > 1) {
-                break;
-            }
-        }
-        if ($players_in_game <= 1) {
-            $res = true;
-        }
-        return $res;
-    }
-
-    private function getBestCardsByLocation($playerId, $nbCards) {
-        $i = 0;
-        $res = [];
-        $sql = "SELECT card_id id, card_type type, card_type_arg type_arg FROM card WHERE card_location_arg='$playerId' ORDER BY card_type_arg DESC";
-        $cards = self::getCollectionFromDb( $sql );
-
-        foreach ($cards as $card) {
-            if ($i >= $nbCards) {
-                break;
-            }
-            $res[$card['id']] = $card;
-            $i++;
-        }
-
-        return $res;
-    }
-
-    private function getCardsByLocationOrderedByValue($playerId, $nbCards, $order = 'ASC') {
-        $i = 0;
-        $res = [];
-        $sql = <<<EOT
-                      SELECT card_id id, card_type type, card_type_arg type_arg FROM card 
-                      WHERE card_location_arg='$playerId' AND `card_location`= 'hand' 
-                      ORDER BY card_type_arg $order; 
-EOT;
-
-        $cards = self::getCollectionFromDb( $sql );
-
-        foreach ($cards as $card) {
-            if ($i >= $nbCards) {
-                break;
-            }
-            $res[$card['id']] = $card;
-            $i++;
-        }
-
-        return $res;
     }
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions
 //////////// 
 
-    function passTurn() 
-    {
-        self::checkAction("passTurn");
-
-        if (self::getGameStateValue(GS::currentHandType) == 0) {
-            throw new BgaUserException( self::_("You must play") );
-            $this->gamestate->nextState('');
-            return;
-        }
-
-        $player_id = self::getActivePlayerId();
-        self::notifyAllPlayers('passTurn', clienttranslate('${player_name} pass'), [
-            'player_name' => self::getActivePlayerName(),
-            'player_id' => $player_id,
-        ]);
-
-        // add stat player passes
-        self::incStat(1, 'player_pass_turn', $player_id);
-
-        $sql = "UPDATE player SET player_has_passed='1' WHERE player_id='$player_id'";
-        self::DbQuery( $sql );
-
-        // Next player
-        $this->gamestate->nextState('nextPlayer');
-    }
-
-    function checkRevolutionTrick($currentOrder, $player_id, $card_ids) 
-    {
-        $optionRevolutionEnabled = $this->gamestate->table_globals[Opt::revolutionOn] == 1 ? True : False;
-        if ($optionRevolutionEnabled && count($card_ids) == 4) {
-            //notif revolution
-            self::setGameStateValue(GS::isRevolutionTrick, ($currentOrder == 0 ? 1 : 0));
-
-            //add stat revolution
-            self::incStat(1, 'player_revolution', $player_id);
-
-            self::notifyAllPlayers('revolutionTrick', clienttranslate('${player_name} made a revolution'), [
-                'player_id' => $player_id,
-                'player_name' => self::getActivePlayerName(),
-            ]);
-        }
-    }
-
-    function checkIfPlayerHasFinished($player_id) 
-    {
-        if (empty($this->cards->getPlayerHand($player_id))) {
-            $position = self::incGameStateValue( GS::finishOrder, 1);
-            if ($position == 1) {
-                // add stat president
-                self::incStat(1, 'player_president_stat', $player_id);
-            }
-            $sql = "UPDATE player SET player_role='$position' WHERE player_id='$player_id'";
-            self::DbQuery( $sql );
-
-            $role = $this->players_roles[self::getGameStateValue(GS::numPlayers)][$position];
-            self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} becomes ${role}'), [
-                'role' => $role,
-                'role_position' => $position,
-                'player_name' => self::getActivePlayerName(),
-                'i18n' => ['role'],
-            ]);
-        }
-    }
-
-    function checkPlayerLeft() {
-        $nbPlayers = self::getGameStateValue(GS::numPlayers);
-        $finishOrder = self::getGameStateValue(GS::finishOrder);
-        return $nbPlayers - $finishOrder;
-    }
-
-    function playCards($card_ids)
-    {
-        self::checkAction("playCard");
-        $cards = [];
-        $skipped = 0;
-        $currentCard = null;
-        $nb_cards = count($card_ids);
-        $player_id = self::getActivePlayerId();
-        $lastCardValue = self::getGameStateValue(GS::lastCardValue);
-        $currentHandType = self::getGameStateValue(GS::currentHandType);
-        $currentOrder = self::getGameStateValue(GS::isRevolutionTrick);
-        $optionSkipEnabled = $this->gamestate->table_globals[Opt::skipOn] == 1 ? True : False;
-
-        foreach ($card_ids as $card_id) {
-            $currentCard = $this->cards->getCard($card_id);
-            $currentCard['card_id'] = $card_id;
-            $cards[] = $currentCard;
-        }
-
-        if( $currentHandType == 0) {
-            self::setGameStateValue(GS::currentHandType, $nb_cards);
-        } elseif ($error = $this->checkHand($cards)) {
-            if ($currentOrder == 0) {
-                if ($optionSkipEnabled && $this->getHighestCardValue() != $currentCard['type_arg']) {
-                    throw new BgaUserException( self::_("You must play card(s) stronger or equal than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
-                } else {
-                    throw new BgaUserException( self::_("You must play card(s) stronger than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
-                }
-            } else {
-                if ($optionSkipEnabled && $this->getLowestCardValue() != $currentCard['type_arg']) {
-                    throw new BgaUserException( self::_("You must play card(s) weaker or equal than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );
-                } else {
-                    throw new BgaUserException( self::_("You must play card(s) weaker than a {$this->card_count_label[$currentHandType]} {$this->card_names[$lastCardValue]}") );  
-                }
-                  
-            }
-            $this->gamestate->nextState('');
-            return;
-        }
-
-        // check skip option
-        if ($currentCard['type_arg'] == $lastCardValue && $optionSkipEnabled) {
-            $skipped = 1;
-        }
-         
-        // check revolution
-        $this->checkRevolutionTrick($currentOrder, $player_id, $card_ids);
-        $this->cards->moveCards($card_ids, 'cardsontable', $player_id);
-        self::setGameStateValue(GS::lastCardValue, $currentCard['type_arg']);
-        self::setGameStateValue(GS::lastPlayerPlayedId, $player_id);
-
-        // And notify
-        self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays a ${nb_cards} ${value_displayed}'), [
-            'i18n' => ['nb_cards', 'value_displayed'],
-            'cards' => $cards,
-            'card_id' => $currentCard['id'],
-            'player_id' => $player_id,
-            'player_name' => self::getActivePlayerName(),
-            'value' => $currentCard ['type_arg'],
-            'value_displayed' => $this->card_names [$currentCard ['type_arg']],
-            'color' => $currentCard ['type'],
-            'nb_cards' => $this->card_count_label[$nb_cards],
-        ]);
-
-        // check if player has finished
-        $this->checkIfPlayerHasFinished($player_id);
-
-        if ($skipped && $this->checkPlayerLeft() > 1) {
-            $players = self::loadPlayersBasicInfos();
-            $next_player_id = $this->getNextActivePlayer();
-            if ($next_player_id != $player_id) {
-                self::notifyAllPlayers('playerSkipped', clienttranslate('${player_name} skip ${player_name_skipped}'), [
-                    'player_name' => self::getActivePlayerName(),
-                    'player_name_skipped' => $players[ $next_player_id ]['player_name']
-                ]);
-                // skip next player
-                $this->gamestate->nextState('nextPlayer');
-            }
-        }
-
-        // Next player
-        $this->gamestate->nextState('nextPlayer');
-    }
-
-    function swapCards($card_ids)
-    {
-        self::checkAction("swapCards");
-        $msg_error = "";
-        $nb_cards = count($card_ids);
-        $player_id = self::getActivePlayerId();
-        $nbPlayers = self::getGameStateValue(GS::numPlayers);
-
-        $sql = "SELECT player_role role, player_id id FROM player ORDER BY role ASC";
-        $players_by_position = self::getCollectionFromDb( $sql , true );
-
-        if ($players_by_position[1] == $player_id) {
-            if ($nb_cards  != 2) {
-                $msg_error = self::_("You have to swap 2 cards");
-            }
-        } else if ($players_by_position[2] == $player_id) {
-            if ($nb_cards  != 1) {
-                $msg_error = self::_("You have to swap 1 card");
-            }
-        } else {
-            $msg_error = self::_("You can't swap cards");
-        }
-
-        if ($msg_error) {
-            throw new BgaUserException( $msg_error);
-            $this->gamestate->nextState('');
-            return;
-        }
-
-        //SWAP
-        if (self::getGameStateValue(GS::presidentSwapCards) == 0) {
-            $beggarId = $players_by_position[$nbPlayers];
-            $cardsForPresident = self::getBestCardsByLocation($beggarId, 2);
-            $cardsForBeggar = $this->cards->getCards($card_ids);
-
-            $this->cards->moveCards($card_ids, 'hand', $beggarId);
-            $this->cards->moveCards(array_keys($cardsForPresident), 'hand', $player_id);
-
-            self::notifyPlayer( $player_id, 'swapCards', '', [
-                'cards' => $cardsForPresident,
-                'cardsSent' => $cardsForBeggar,
-                'destination' => $beggarId
-            ]);
-            self::notifyPlayer( $beggarId, 'swapCards', '', [
-                'destination' => $player_id,
-                'cards' => $cardsForBeggar,
-                'cardsSent' => $cardsForPresident
-            ]);
-
-            self::setGameStateValue(GS::presidentSwapCards, 1);
-            $this->gamestate->nextState('endPresidentSwap');
-        } else {
-            // Next player
-            $peasantId = $players_by_position[$nbPlayers-1];
-            $cardsForPrimeMinister = self::getBestCardsByLocation($peasantId, 1);
-            $cardsForPeasant = $this->cards->getCards($card_ids);
-
-            $this->cards->moveCards($card_ids, 'hand', $peasantId);
-            $this->cards->moveCards(array_keys($cardsForPrimeMinister), 'hand', $player_id);
-
-            self::notifyPlayer( $player_id, 'swapCards', '', [
-                'cards' => $cardsForPrimeMinister,
-                'cardsSent' => $cardsForPeasant,
-                'destination' => $peasantId,
-            ]);
-            self::notifyPlayer( $peasantId, 'swapCards', '', [
-                'destination' => $player_id,
-                'cards' => $cardsForPeasant,
-                'cardsSent' => $cardsForPrimeMinister
-            ]);
-
-            self::setGameStateValue(GS::presidentSwapCards, 0);
-            $this->gamestate->nextState('endPrimeMinisterSwapTurn');
-        }
-    }
-
-    //////////////////////////////////////////////////////////////////////////////
-    //////////// Game state arguments
-    ////////////
     /*
- * Here, you can create methods defined as "game state arguments" (see "args" property in states.inc.php).
- * These methods function is to return some additional information that is specific to the current
- * game state.
- */
-    function argSwapCards() {
-        $cardsToGive = [1 => 2, 2 => 1];
-        $players = self::getCollectionFromDb( "SELECT `player_id`, `player_role` from player WHERE `player_role` IN (1 ,2)" );
+        Each time a player is doing some game action, one of the methods below is called.
+        (note: each method below must match an input method in president.action.php)
+    */
 
-        foreach ($players as $player_id => $player) {
-            $res[$player_id] = ['nbr' => $cardsToGive[$player['player_role']]];
+    function giveCard ($card_ids) {
+        self::checkAction('giveCard');
+        $cards = $this->cards->getCards($card_ids);
+        if (!$cards) throw new BgaVisibleSystemException(self::_("Please select cards"));
+        $player_id = self::getActivePlayerId();
+        foreach ($cards as $card) if ($card['location'] != 'hand' || $card['location_arg'] != $player_id) throw new BgaVisibleSystemException(self::_("You selected an invalid option"));
+
+        $player_count = self::getPlayersNumber();
+        $role = $this->getUniqueValueFromDB("SELECT player_role FROM player WHERE player_id = $player_id");
+        $other_role = $player_count - ($role == 1 ? 0 : 1);
+        $other_player_id = $this->getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = $other_role");
+        $card_count = $player_count < 4 ? 1 : ($role == 1 ? 2 : 1);
+        if (count($cards) != $card_count) throw new BgaVisibleSystemException(self::_("Please select correct number of cards"));
+
+        $other_hand = $this->cards->getPlayerHand($other_player_id);
+        usort($other_hand, [$this, "sortCardsByRank"]);
+        $other_cards = [];
+        $other_keys = [];
+        for ($i = 0; $i < $card_count; $i++) {
+            $other_card = array_shift($other_hand);
+            $other_cards[] = $other_card;
+            $other_keys[] = $other_card['id'];
+        }
+        $this->cards->moveCards($other_keys, 'hand', $player_id);
+        $this->cards->moveCards($card_ids, 'hand', $other_player_id);
+
+        usort($cards, [$this, "sortCards"]);
+        $logs = [];
+        $args = [];
+        foreach ($cards as $card) {
+            $logs[] = '${color'.$i.'}${value'.$i.'}';
+            $args['i18n'][] = 'color'.$i;
+            $args['color'.$i] = $this->colors[$card['type']];
+            $args['value'.$i] = $this->values_label[$card['type_arg']];
+            $i++;
+        }
+        $full_log_high = ['log' => implode(', ', $logs), 'args' => $args];
+        $other_cards = array_reverse($other_cards);
+        $logs = [];
+        $args = [];
+        $i = 0;
+        foreach ($other_cards as $card) {
+            $logs[] = '${color'.$i.'}${value'.$i.'}';
+            $args['i18n'][] = 'color'.$i;
+            $args['color'.$i] = $this->colors[$card['type']];
+            $args['value'.$i] = $this->values_label[$card['type_arg']];
+            $i++;
+        }
+        $full_log_low = ['log' => implode(', ', $logs), 'args' => $args];
+
+        $player_name = self::getActivePlayerName();
+        $other_player_name = self::getPlayerNameById($other_player_id);
+        self::notifyPlayer($player_id, 'privateExchange', clienttranslate('You passed ${card_list_given} to ${player_name} and received ${card_list_received}'), [
+            'player_id' => $other_player_id,
+            'player_name' => $other_player_name,
+            'card_list_given' => $full_log_high,
+            'cards_given' => $cards,
+            'card_list_received' => $full_log_low,
+            'cards_received' => $other_cards,
+        ]);
+        self::notifyPlayer($other_player_id, 'privateExchange', clienttranslate('You passed ${card_list_given} to ${player_name} and received ${card_list_received}'), [
+            'player_id' => $player_id,
+            'player_name' => $player_name,
+            'card_list_given' => $full_log_low,
+            'cards_given' => $other_cards,
+            'card_list_received' => $full_log_high,
+            'cards_received' => $cards,
+        ]);
+        self::notifyAllPlayers('giveCard', $card_count == 2 ? clienttranslate('${player_name} and ${player_name2} exchanges two cards') : clienttranslate('${player_name} and ${player_name2} exchanges a card'), [
+            'player_id' => $player_id,
+            'other_player_id' => $other_player_id,
+            'player_name' => $player_name,
+            'player_name2' => $other_player_name,
+            'card_count' => $card_count,
+        ]);
+
+        self::giveExtraTime($player_id);
+        $this->gamestate->nextState('');
+    }
+
+    function playCard ($card_ids) {
+        self::checkAction('playCard');
+        $cards = $this->cards->getCards($card_ids);
+        if (!$cards) throw new BgaVisibleSystemException(self::_("Please select cards"));
+        $player_id = self::getActivePlayerId();
+        $suit_count = [0, 0, 0, 0];
+        $count_joker = 0;
+        foreach ($cards as $card) {
+            if ($card['type'] == 4) $count_joker++;
+            else $suit_count[$card['type']]++;
+            if ($card['location'] != 'hand' || $card['location_arg'] != $player_id) throw new BgaVisibleSystemException(self::_("You selected an invalid option"));
         }
 
-        $sql = "SELECT player_role role, player_id id FROM player ORDER BY role ASC";
-        $res['players_by_position'] = self::getCollectionFromDb( $sql , true );
-        return $res;
+        $table_cards = $this->cards->getCardsInLocation('cardsontable');
+        $table_combination = $this->evaluateCombination($table_cards);
+        $hand_combination = $this->evaluateCombination($cards);
+        $suit_lock_complete = self::getGameStateValue("suit_lock_complete");
+        if (!$hand_combination) throw new BgaUserException(self::_("Please play a valid combination"));
+        else if ($hand_combination['type'] == 1 && !self::getGameStateValue("sequence")) throw new BgaUserException(self::_("You cannot play sequences in this table"));
+        if ($table_combination) {
+            if ($hand_combination['type'] != $table_combination['type'] || count($cards) != count($table_cards)) throw new BgaUserException(self::_("You cannot play this combination now"));
+            else if ($hand_combination['value'] < $table_combination['value'] || ($hand_combination['value'] == $table_combination['value'] && !self::getGameStateValue("same_rank_skip"))) throw new BgaUserException(self::_("This combination cannot beat the current combination"));
+            if ($suit_lock_complete) {
+                $lacking_count = 0;
+                $locked_count = [];
+                $locked_count[0] = $suit_lock_complete % 100;
+                $locked_count[1] = floor(($suit_lock_complete % 10000) / 100);
+                $locked_count[2] = floor(($suit_lock_complete % 1000000) / 10000);
+                $locked_count[3] = floor($suit_lock_complete / 1000000);
+                for ($i = 0; $i <= 3; $i++) {
+                    if ($suit_count[$i] > $locked_count[$i]) throw new BgaUserException(self::_("This combination does not follow suit lock"));
+                    else if ($suit_count[$i] < $locked_count[$i]) $lacking_count += $locked_count[$i] - $suit_count[$i];
+                }
+                if ($lacking_count != $count_joker) throw new BgaUserException(self::_("This combination does not follow suit lock"));
+            }
+        }
+        
+        $this->cards->moveAllCardsInLocationKeepOrder('cardsontable', 'discard');
+        $this->cards->moveCards($card_ids, 'cardsontable', $player_id);
+        $this->DbQuery("UPDATE player SET player_has_passed = 0");
+
+        $revolution = self::getGameStateValue("revolution");
+        $ender_8 = self::getGameStateValue("ender_8");
+        $reversing_9 = self::getGameStateValue("reversing_9");
+        $jack_back = self::getGameStateValue("jack_back");
+        $regular_revolution = self::getGameStateValue("regular_revolution");
+        $temporary_revolution = self::getGameStateValue("temporary_revolution");
+        $current_revolution_status = (bool)$regular_revolution ^ (bool)$temporary_revolution;
+        $count_8 = 0;
+        $count_9 = 0;
+        $count_jack = 0;
+        $count_2 = 0;
+        $count_3 = 0;
+
+        $logs = [];
+        $args = [];
+        $i = 0;
+        foreach ($hand_combination['card_list'] as $card) {
+            switch ($card['type_arg']) {
+                case 1:
+                    $count_3++;
+                    break;
+                case 6:
+                    $count_8++;
+                    break;
+                case 7:
+                    $count_9++;
+                    break;
+                case 9:
+                    $count_jack++;
+                    break;
+                case 13:
+                    $count_2++;
+                    break;
+            }
+
+            $logs[] = '${color'.$i.'}${value'.$i.'}';
+            $args['i18n'][] = 'color'.$i;
+            $args['color'.$i] = $this->colors[$card['type']];
+            $args['value'.$i] = $this->values_label[$card['type_arg']];
+            $i++;
+        }
+        $full_log = ['log' => implode('-', $logs), 'args' => $args];
+
+        $lock = false;
+        if (!$suit_lock_complete && self::getGameStateValue("suit_lock") && !($ender_8 && $count_8)) {
+            $suit_lock_prep = self::getGameStateValue("suit_lock_prep");
+            if ($suit_lock_prep && !$count_joker) {
+                $prep_count = [];
+                $prep_count[0] = $suit_lock_prep % 100;
+                $prep_count[1] = floor(($suit_lock_prep % 10000) / 100);
+                $prep_count[2] = floor(($suit_lock_prep % 1000000) / 10000);
+                $prep_count[3] = floor($suit_lock_prep / 1000000);
+                $lock = true;
+                for ($i = 0; $i <= 3; $i++) if ($suit_count[$i] != $prep_count[$i]) {
+                    $lock = false;
+                    break;
+                }
+                if ($lock) self::setGameStateValue("suit_lock_complete", $suit_count[0] + $suit_count[1] * 100 + $suit_count[2] * 10000 + $suit_count[3] * 1000000);
+                else self::setGameStateValue("suit_lock_prep", $suit_count[0] + $suit_count[1] * 100 + $suit_count[2] * 10000 + $suit_count[3] * 1000000);
+            } else self::setGameStateValue("suit_lock_prep", $count_joker ? 0 : ($suit_count[0] + $suit_count[1] * 100 + $suit_count[2] * 10000 + $suit_count[3] * 1000000));
+        }
+
+        $player_name = self::getActivePlayerName();
+        self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${card_list}'), [
+            'player_id' => $player_id,
+            'player_name' => $player_name,
+            'card_list' => $full_log,
+            'combination' => $hand_combination,
+            'suit_lock' => $lock,
+        ]);
+
+        if (!$this->cards->countCardInLocation('hand', $player_id)) {
+            $remaining_players = array_keys($this->cards->countCardsByLocationArgs('hand'));
+            if (self::getGameStateValue("illegal_finish") && ($count_joker || (!$current_revolution_status && $count_2) || ($current_revolution_status && $count_3) || ($ender_8 && $count_8)))
+                $rank = 100 - self::getUniqueValueFromDB("SELECT count(*) FROM player WHERE player_role >= 71 AND player_id != $player_id AND player_id NOT IN (".implode(',', $remaining_players).")");
+            else $rank = 1 + self::getUniqueValueFromDB("SELECT count(*) FROM player WHERE player_role < 50 AND player_id != $player_id AND player_id NOT IN (".implode(',', $remaining_players).")");
+            $this->DbQuery("UPDATE player SET player_role = $rank WHERE player_id = $player_id");
+            if ($rank >= 71) self::incStat(1, 'illegal_finish', $player_id);
+            self::notifyAllPlayers("goOut", $rank >= 71 ? clienttranslate('${player_name} goes out by illegal finish and is disqualified!') : clienttranslate('${player_name} goes out!'), [
+                'player_id' => $player_id,
+                'player_name' => $player_name,
+                'rank' => $rank,
+            ]);
+            if ($rank == 1 && self::getGameStateValue("downfall") && self::getPlayersNumber() > 2) {
+                $downfall_player = self::getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = 1 AND player_id IN (".implode(',', $remaining_players).")");
+                if ($downfall_player) {
+                    self::incStat(1, 'downfall', $downfall_player);
+                    $this->DbQuery("UPDATE player SET player_role = 70 WHERE player_id = $downfall_player");
+                    $this->cards->moveAllCardsInLocation('hand', 'removed', $downfall_player, $downfall_player);
+                    self::notifyAllPlayers("goOut", clienttranslate('The former President ${player_name} fails to get the first place and is disqualified!'), [
+                        'player_id' => $downfall_player,
+                        'player_name' => self::getPlayerNameById($downfall_player),
+                        'rank' => 70,
+                    ]);
+                }
+            }
+        }
+
+        $hand_player_count = count($this->cards->countCardsByLocationArgs('hand'));
+        if ($revolution && count($cards) >= 4 && $hand_player_count > 1) {
+            self::setGameStateValue("regular_revolution", 1 - $regular_revolution);
+            self::incStat(1, 'revolution', $player_id);
+            self::notifyAllPlayers("noSound", clienttranslate('Playing 4 or more cards reverses the card rank during this round!'), []);
+        }
+        if ($jack_back && $count_jack && !($ender_8 && $count_8) && $hand_player_count > 1) {
+            self::setGameStateValue("temporary_revolution", 1 - $temporary_revolution);
+            self::notifyAllPlayers("noSound", clienttranslate('J effect reverses the card rank during this trick!'), []);
+        }
+        if ($reversing_9 && $count_9) {
+            self::setGameStateValue("reversed", 1 - self::getGameStateValue("reversed"));
+            self::notifyAllPlayers("noSound", clienttranslate('9 effect reverses the turn order permanently!'), []);
+        }
+        if ($ender_8 && $count_8 && $hand_player_count > 1) self::notifyAllPlayers("noSound", clienttranslate('8 effect ends this trick immediately!'), []);
+        if ($table_combination) {
+            if ($hand_combination['value'] == $table_combination['value'] && !($ender_8 && $count_8) && $hand_player_count > 1) {
+                self::setGameStateValue("skip_turn", 1);
+                $next_player = $this->getSurvivingNextPlayer($player_id);
+                $this->DbQuery("UPDATE player SET player_has_passed = 1 WHERE player_id = $next_player");
+                self::notifyAllPlayers("passTurn", clienttranslate('Playing the same rank skips ${player_name}\'s turn!'), [
+                    'player_id' => $next_player,
+                    'player_name' => self::getPlayerNameById($next_player),
+                ]);
+            }
+        }
+        if ($lock && $hand_player_count > 1) {
+            self::incStat(1, 'suit_lock', $player_id);
+            self::notifyAllPlayers("noSound", clienttranslate('Playing the same suit combination locks the suit during this trick!'), []);
+        }
+
+        self::giveExtraTime($player_id);
+        $this->gamestate->nextState('');
     }
+
+    function passTurn() {
+        self::checkAction('passTurn');
+        if (!$this->cards->countCardInLocation('cardsontable')) throw new BgaVisibleSystemException(self::_("You selected an invalid option"));
+
+        $player_id = self::getActivePlayerId();
+        $this->DbQuery("UPDATE player SET player_has_passed = 1 WHERE player_id = '$player_id'");
+        self::notifyAllPlayers("passTurn", '', ['player_id' => $player_id]);
+
+        self::giveExtraTime($player_id);
+        $this->gamestate->nextState('');
+    }
+
+//////////////////////////////////////////////////////////////////////////////
+//////////// Game state arguments
+////////////
+
+    /*
+        Here, you can create methods defined as "game state arguments" (see "args" property in states.inc.php).
+        These methods function is to return some additional information that is specific to the current
+        game state.
+    */
+
+    function argGiveCard() {
+        $player_id = self::getActivePlayerId();
+        $role = $this->getUniqueValueFromDB("SELECT player_role FROM player WHERE player_id = $player_id");
+        $other_role = self::getPlayersNumber() - ($role == 1 ? 0 : 1);
+        $other_player_id = $this->getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = $other_role");
+        return [
+            'otherplayer' => self::getPlayerNameById($other_player_id),
+            'otherplayer_id' => $other_player_id,
+        ];
+    }
+
+    function argPlayerTurn() {return ['passable' => $this->cards->countCardInLocation('cardsontable') > 0];}
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Game state actions
 ////////////
 
-    function stNewHand()
-    {
-        $activePlayer = self::getActivePlayerId();
-        $firstRound = self::getGameStateValue(GS::isFirstRound);
-        self::setGameStateValue(GS::isRevolutionTrick, 0);
+    /*
+        Here, you can create methods defined as "game state actions" (see "action" property in states.inc.php).
+        The action method of state X is called everytime the current game state is set to X.
+    */
 
-        // add stat new hand
-        self::incStat(1, 'Hand_number');
-
-        // Take back all cards (from any location => null) to deck
-        $this->cards->moveAllCardsInLocation(null, "deck");
+    function stStartRound() {
+        self::incStat(1, 'round_number');
+        $this->DbQuery("UPDATE player SET player_has_passed = 0");
+        self::setGameStateValue("regular_revolution", 0);
+        self::setGameStateValue("temporary_revolution", 0);
+        self::setGameStateValue("skip_turn", 0);
+        self::setGameStateValue("suit_lock_prep", 0);
+        self::setGameStateValue("suit_lock_complete", 0);
+        $this->cards->moveAllCardsInLocation(null, 'deck');
         $this->cards->shuffle('deck');
+        $deck_count = $this->cards->countCardInLocation('deck');
+        $hand_count_list = [];
+        $rank_list = [];
 
-        // Deal the cards, in pairs (unless there the number of cards in the deck is < 2 * playerCount)
-        $playerCount = $this->getPlayersNumber();
-        $deckSize = $this->cards->countCardInLocation("deck");
-        $deckLeft = $deckSize;
+        if (self::getStat("round_number") > 1) {
+            $player_list = self::getCollectionFromDb("SELECT player_id id, player_role role FROM player ORDER BY player_role DESC", true);
+            $player_count = count($player_list);
+            $deal_count = $player_count == 2 ? 16 : floor($deck_count / $player_count);
+            $deck_count -= $deal_count * $player_count;
+            $current_rank = $player_count;
+            $hand_card_list = [];
+            $first_rank = null;
+            foreach ($player_list as $player_id => $rank) {
+                if ($rank != $current_rank) $this->DbQuery("UPDATE player SET player_role = $current_rank WHERE player_id = $player_id");
+                $rank_list[$player_id] = $current_rank;
+                if ($current_rank == 1) $first_rank = $player_id;
+                $current_rank--;
 
-        // The dealing player is the active player == the Beggar.
-        // He starts dealing at the player after him
-        $dealingPlayer = $activePlayer;
-        $firstPlayerToDealTo = self::getPlayerAfter( $dealingPlayer );
-
-        while (true) {
-            $dealSize = ($deckLeft >= 2 * $playerCount) ? 2 : 1;
-            $iterPlayer = $firstPlayerToDealTo;
-            do {
-                if ($deckLeft == 0)
-                    break;
-                $dealtCards = $this->cards->pickCards( $dealSize, 'deck', $iterPlayer );
-                $deckLeft -= count($dealtCards);
-                $iterPlayer = self::getPlayerAfter( $iterPlayer );
-            }
-            while ($iterPlayer != $firstPlayerToDealTo);
-            if ($deckLeft == 0)
-                break;
-        }
-        // Notify players of their new Hand
-        $this->notifyPlayersOfNewHand();
-
-        if ($firstRound == 0) {
-            $sql = "SELECT player_role role, player_id id FROM player ORDER BY role ASC";
-            $players_by_position = self::getCollectionFromDb( $sql , true );
-
-            self::notifyAllPlayers('resetCounters', '', [
-                'nb_cards' => $this->cards->countCardsByLocationArgs('hand'),
-                'players' => self::getCollectionFromDb( "SELECT player_id id,player_role role FROM player" ),
-            ]);
-
-            $this->gamestate->changeActivePlayer( $players_by_position[1] );
-            $this->gamestate->nextState("presidentSwapTurn");
-        } else {
-            $this->gamestate->nextState("playerTurn");
-        }
-    }
-
-    function notifyPlayersOfNewHand()
-    {
-        $activePlayer = self::getActivePlayerId();
-        $iterPlayer = $activePlayer;
-        do {
-            $notifData = [];
-
-            $notifData['cards'] = $this->cards->getPlayerHand( $iterPlayer );
-
-            // Notify player about his cards
-            self::notifyPlayer( $iterPlayer, 'newHand', '', $notifData);
-            $iterPlayer = self::getPlayerAfter( $iterPlayer );
-        }
-        while ($iterPlayer != $activePlayer);
-    }
-
-    function stNewRound()
-    {
-        $this->setUpNewRound();
-        $player_id = self::getActivePlayerId();
-        if (empty($this->cards->getPlayerHand($player_id))) {
-            $next_player_id = $this->getNextActivePlayer();
-            $this->gamestate->changeActivePlayer( $next_player_id );
-        }
-        $this->gamestate->nextState('playerTurn');
-    }
-
-    function stNextPlayer()
-    {
-        $next_player_id = $this->getNextActivePlayer();
-        $last_card = self::getGameStateValue(GS::lastCardValue);
-        $last_player_played = self::getGameStateValue(GS::lastPlayerPlayedId);
-        $best_card_current_hand = self::getGameStateValue(GS::isRevolutionTrick) == 0 ? $this->getHighestCardValue() : $this->getLowestCardValue();
-
-        if ($this->checkEndGame()) {
-            // End of the game
-            $this->gamestate->nextState("endHand");
-        } else {
-            if (in_array($last_card, [933, 934]) || ($next_player_id == $last_player_played)) {
-                if ($next_player_id == $last_player_played) {
-                    $this->gamestate->changeActivePlayer( $next_player_id );
+                if ($deck_count > 0) {
+                    $deck_count--;
+                    $hand_count_list[$player_id] = $deal_count + 1;
+                    $hand_card_list[$player_id] = $this->cards->pickCards($deal_count + 1, 'deck', $player_id);
+                } else {
+                    $hand_count_list[$player_id] = $deal_count;
+                    $hand_card_list[$player_id] = $this->cards->pickCards($deal_count, 'deck', $player_id);
                 }
-                $this->gamestate->nextState("newRound");
-            } else if ($last_card == $best_card_current_hand && empty($this->cards->getCardsOfTypeInLocation(5, null, 'hand'))) {
-                $this->gamestate->nextState("newRound");
-            } else {
-                // Standard case (not the end of the trick)
-                // => just active the next player
-                self::giveExtraTime(self::getActivePlayerId());
-                $this->gamestate->changeActivePlayer( $next_player_id );
-                $this->gamestate->nextState('playerTurn');
             }
-        }
-    }
 
-    function stEndHand() {
-        // Count and score points, then end the game or go to the next hand.
-        $cards = $this->cards->getCardsInLocation( 'hand');
-        $position = self::incGameStateValue(GS::finishOrder, 1);
-        $nbPlayers = self::getGameStateValue(GS::numPlayers);
-        $players = self::loadPlayersBasicInfos();
-        $card = current($cards);
-        $lastPlayer = $players[$card['location_arg']];
-
-        // set up beggar
-        $players = self::getCollectionFromDb( "SELECT player_id, player_name, player_has_passed, player_role FROM player" );
-        $sql = "UPDATE player SET player_role='$position' WHERE player_id='{$lastPlayer['player_id']}'";
-        self::DbQuery( $sql );
-
-        // add stat beggar
-        self::incStat(1, 'player_beggar_stat', $lastPlayer['player_id']);
-
-        $this->setUpNewRound();
-        $role = $this->players_roles[$nbPlayers][$position];
-        self::notifyAllPlayers('playerFinished', clienttranslate('${player_name} become\'s ${role}'), [
-            'role' => $role,
-            'role_position' => $position,
-            'player_name' => $lastPlayer['player_name'],
-            'i18n' => ['role'],
-        ]);
-
-        $this->gamestate->changeActivePlayer( $lastPlayer['player_id'] );
-        self::setGameStateValue(GS::finishOrder, 0);
-        self::setGameStateValue(GS::isFirstRound, 0);
-
-        // Apply scores to player
-        foreach ( $players as $player_id => $player ) {
-            $message = self::_('${player_name} loses ${nbr} points');
-            if ($lastPlayer['player_id'] == $player_id) {
-                $position = $nbPlayers;
-            } else {
-                $position = $player['player_role'];
-            }
-            $points = $this->points_per_position[$nbPlayers][$position];
-            $sql = "UPDATE player SET player_score=player_score-$points WHERE player_id='$player_id'";
-            self::DbQuery($sql);
-            if (gmp_sign($points) == '-1') {
-                $message = self::_('${player_name} won ${nbr} points');
-            }
-            self::notifyAllPlayers("points", $message, [
-                'player_name' => $player ['player_name'],
-                'player_id' => $player_id,
-                'nbr' => abs($points) ]
-            );
-        }
-        $newScores = self::getCollectionFromDb("SELECT player_id, player_score FROM player", true );
-        self::notifyAllPlayers( "newScores", '', ['newScores' => $newScores] );
-
-        ///// Test if this is the end of the game by score
-        foreach ( $newScores as $player_id => $score ) {
-            if ($score <= 0) {
-                $this->gamestate->nextState("endGame");
-                return;
-            }
-        }
-
-        ///// Test if this is the end of the game by round
-        $gameDurationOption = $this->gamestate->table_globals[Opt::gameDuration];
-        if ($this->game_duration[$gameDurationOption]['type'] == 'round') {
-            if ($this->game_duration[$gameDurationOption]['max_round'] == self::getStat('Hand_number')) {
-                $this->gamestate->nextState("endGame");
-                return;
-            }
-        }
-
-        $this->gamestate->nextState("newHand");
-    }
-
-    function stSwapCards() {
-        $sql = "SELECT player_role role, player_id id FROM player ORDER BY role ASC";
-        $players_by_position = self::getCollectionFromDb( $sql , true );
-
-        if (self::getGameStateValue(GS::presidentSwapCards) == 1) {
-            $this->gamestate->changeActivePlayer( $players_by_position[2] );
-            $this->gamestate->nextState('primeMinisterSwapTurn');
+            foreach ($player_list as $player_id => $player) self::notifyPlayer($player_id, 'newHand', '', ['cards' => $hand_card_list[$player_id]]);
+            self::notifyAllPlayers('newRound', clienttranslate('A new round starts'), [
+                'hand_count' => $hand_count_list,
+                'rank_list' => $rank_list,
+            ]);
+            $this->gamestate->changeActivePlayer($first_rank);
+            $transition = $player_count > 3 ? 'presidentGive' : 'ministerGive';
         } else {
-            $this->gamestate->changeActivePlayer( $players_by_position[self::getGameStateValue(GS::numPlayers)] );
-            $this->gamestate->nextState('playerTurn');
+            $player_list = self::getCollectionFromDb("SELECT player_id id, player_role role FROM player ORDER BY player_no", true);
+            $player_count = count($player_list);
+            $deal_count = $player_count == 2 ? 19 : floor($deck_count / $player_count);
+            $deck_count -= $deal_count * $player_count;
+            foreach ($player_list as $player_id => $player) {
+                $rank_list[$player_id] = 0;
+                if ($deck_count > 0) {
+                    $deck_count--;
+                    $hand_count_list[$player_id] = $deal_count + 1;
+                    self::notifyPlayer($player_id, 'newHand', '', ['cards' => $this->cards->pickCards($deal_count + 1, 'deck', $player_id)]);
+                } else {
+                    $hand_count_list[$player_id] = $deal_count;
+                    self::notifyPlayer($player_id, 'newHand', '', ['cards' => $this->cards->pickCards($deal_count, 'deck', $player_id)]);
+                }
+            }
+            self::notifyAllPlayers('newRound', clienttranslate('${player_name} starts the first round'), [
+                'player_name' => self::getActivePlayerName(),
+                'hand_count' => $hand_count_list,
+                'rank_list' => $rank_list,
+            ]);
+            $transition = 'playerTurn';
         }
+        $this->gamestate->nextState($transition);
     }
 
-    function stEndGame() {
-        $players = self::getCollectionFromDb( "SELECT `player_id`, `player_name` from player WHERE " +
-            "`player_score` = (SELECT MAX(`player_score`) from player) ORDER BY `player_role` ASC" );
-        $player = current($players);
+    function stGiveEnd() {
+        $player_id = self::getActivePlayerId();
+        $player_count = self::getPlayersNumber();
+        $role = $this->getUniqueValueFromDB("SELECT player_role FROM player WHERE player_id = $player_id");
+        if ($role == 2 || $player_count < 4) {
+            $first_player_mode = self::getGameStateValue("first_player_mode");
+            $first_player = $this->getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = ".(self::getGameStateValue("first_player_mode") ? 1 : $player_count));
+            $this->gamestate->changeActivePlayer($first_player);
+            self::notifyAllPlayers('noSound', clienttranslate('${player_name} starts the first round as ${role_name}'), [
+                'i18n' => ['role_name'],
+                'player_name' => self::getPlayerNameById($first_player),
+                'role_name' => $first_player_mode ? ($player_count < 4 ? clienttranslate('Minister') : clienttranslate('President')) : ($player_count < 4 ? clienttranslate('Peasant') : clienttranslate('Beggar')),
+            ]);
+            $transition = 'playerTurn';
+        } else {
+            $this->gamestate->changeActivePlayer($this->getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = 2"));
+            $transition = 'ministerGive';
+        }
+        $this->gamestate->nextState($transition);
+    }
 
-        self::notifyAllPlayers('playerWon', clienttranslate('${player_name} won'), [
-            'player_name' => $player['name'],
+    function stNextPlayer() {
+        $hand_player_count = count($this->cards->countCardsByLocationArgs('hand'));
+        $transition = 'nextPlayer';
+
+        if ($hand_player_count <= 1) $transition = 'endRound';
+        else {
+            $player_id = self::getActivePlayerId();
+            $table_cards = $this->cards->getCardsInLocation('cardsontable');
+            $table_card_list = $table_cards;
+            $table_card_player = array_shift($table_card_list)['location_arg'] ?? 0;
+            $next_player = self::getSurvivingNextPlayer($player_id);
+            if (self::getGameStateValue("skip_turn")) {
+                self::setGameStateValue("skip_turn", 0);
+                $next_player = self::getSurvivingNextPlayer($next_player);
+            }
+            $ender_8 = self::getGameStateValue("ender_8");
+            $found_8 = false;
+            foreach ($table_cards as $card) if ($card['type_arg'] == 6) {
+                $found_8 = true;
+                break;
+            }
+            if ($ender_8 && $found_8) $transition = 'endTrick';
+            else if ($next_player == $table_card_player || $hand_player_count <= self::getUniqueValueFromDB("SELECT count(*) FROM player WHERE player_has_passed > 0")) $transition = 'endTrick';
+            else {
+                $table_combination = $this->evaluateCombination($table_cards);
+                $this->gamestate->changeActivePlayer($next_player);
+                $autoplay = false;
+                $autopass = false;
+                if ($table_combination) {
+                    $hand = $this->cards->getCardsInLocation('hand', $next_player);
+                    $hand_combination = $this->evaluateCombination($hand);
+                    $playable = (bool)$hand_combination;
+                    if ($playable && $hand_combination['type'] == 1 && !self::getGameStateValue("sequence")) $playable = !$playable;
+                    if ($playable) {
+                        $suit_count = [0, 0, 0, 0];
+                        $count_joker = 0;
+                        $count_8 = 0;
+                        $count_9 = 0;
+                        $count_jack = 0;
+                        $count_2 = 0;
+                        $count_3 = 0;
+                        foreach ($hand as $card) {
+                            if ($card['type'] == 4) $count_joker++;
+                            else $suit_count[$card['type']]++;
+                            switch ($card['type_arg']) {
+                                case 1:
+                                    $count_3++;
+                                    break;
+                                case 6:
+                                    $count_8++;
+                                    break;
+                                case 7:
+                                    $count_9++;
+                                    break;
+                                case 9:
+                                    $count_jack++;
+                                    break;
+                                case 13:
+                                    $count_2++;
+                                    break;
+                            }
+                        }
+    
+                        $same_rank_skip = self::getGameStateValue("same_rank_skip");
+                        if ($hand_combination['type'] != $table_combination['type'] || count($hand) != count($table_cards)) $playable = false;
+                        if ($hand_combination['value'] < $table_combination['value'] || ($hand_combination['value'] == $table_combination['value'] && !$same_rank_skip)) $playable = false;
+                        $suit_lock_complete = self::getGameStateValue("suit_lock_complete");
+                        if ($suit_lock_complete && $playable) {
+                            $lacking_count = 0;
+                            $locked_count = [];
+                            $locked_count[0] = $suit_lock_complete % 100;
+                            $locked_count[1] = floor(($suit_lock_complete % 10000) / 100);
+                            $locked_count[2] = floor(($suit_lock_complete % 1000000) / 10000);
+                            $locked_count[3] = floor($suit_lock_complete / 1000000);
+                            for ($i = 0; $i <= 3; $i++) {
+                                if ($suit_count[$i] > $locked_count[$i]) $playable = false;
+                                else if ($suit_count[$i] < $locked_count[$i]) $lacking_count += $locked_count[$i] - $suit_count[$i];
+                            }
+                            if ($lacking_count != $count_joker) $playable = false;
+                        }
+    
+                        $regular_revolution = self::getGameStateValue("regular_revolution");
+                        $temporary_revolution = self::getGameStateValue("temporary_revolution");
+                        if ($playable) {
+                            $current_revolution_status = (bool)$regular_revolution ^ (bool)$temporary_revolution;
+                            if (self::getGameStateValue("illegal_finish") && ($count_joker || (!$current_revolution_status && $count_2) || ($current_revolution_status && $count_3) || ($ender_8 && $count_8))) $playable = false;
+                        }
+    
+                        if ($playable) {
+                            $revolution = self::getGameStateValue("revolution");
+                            $reversing_9 = self::getGameStateValue("reversing_9");
+                            $jack_back = self::getGameStateValue("jack_back");
+                            $this->cards->moveAllCardsInLocationKeepOrder('cardsontable', 'discard');
+                            $this->cards->moveAllCardsInLocation('hand', 'cardsontable', $next_player, $next_player);
+                            $this->DbQuery("UPDATE player SET player_has_passed = 0");
+    
+                            $logs = [];
+                            $args = [];
+                            $i = 0;
+                            foreach ($hand_combination['card_list'] as $card) {
+                                $logs[] = '${color'.$i.'}${value'.$i.'}';
+                                $args['i18n'][] = 'color'.$i;
+                                $args['color'.$i] = $this->colors[$card['type']];
+                                $args['value'.$i] = $this->values_label[$card['type_arg']];
+                                $i++;
+                            }
+                            $full_log = ['log' => implode('-', $logs), 'args' => $args];
+    
+                            $lock = false;
+                            if (!$suit_lock_complete && self::getGameStateValue("suit_lock") && !($ender_8 && $count_8)) {
+                                $suit_lock_prep = self::getGameStateValue("suit_lock_prep");
+                                if ($suit_lock_prep && !$count_joker) {
+                                    $prep_count = [];
+                                    $prep_count[0] = $suit_lock_prep % 100;
+                                    $prep_count[1] = floor(($suit_lock_prep % 10000) / 100);
+                                    $prep_count[2] = floor(($suit_lock_prep % 1000000) / 10000);
+                                    $prep_count[3] = floor($suit_lock_prep / 1000000);
+                                    $lock = true;
+                                    for ($i = 0; $i <= 3; $i++) if ($suit_count[$i] != $prep_count[$i]) {
+                                        $lock = false;
+                                        break;
+                                    }
+                                    if ($lock) self::setGameStateValue("suit_lock_complete", $suit_count[0] + $suit_count[1] * 100 + $suit_count[2] * 10000 + $suit_count[3] * 1000000);
+                                    else self::setGameStateValue("suit_lock_prep", $suit_count[0] + $suit_count[1] * 100 + $suit_count[2] * 10000 + $suit_count[3] * 1000000);
+                                } else self::setGameStateValue("suit_lock_prep", $count_joker ? 0 : ($suit_count[0] + $suit_count[1] * 100 + $suit_count[2] * 10000 + $suit_count[3] * 1000000));
+                            }
+
+                            $next_player_name = self::getActivePlayerName();
+                            self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${card_list}'), [
+                                'player_id' => $next_player,
+                                'player_name' => $next_player_name,
+                                'card_list' => $full_log,
+                                'combination' => $hand_combination,
+                                'suit_lock' => $lock,
+                            ]);
+
+                            $remaining_players = array_keys($this->cards->countCardsByLocationArgs('hand'));
+                            $rank = 1 + self::getUniqueValueFromDB("SELECT count(*) FROM player WHERE player_role < 50 AND player_id != $next_player AND player_id NOT IN (".implode(',', $remaining_players).")");
+                            $this->DbQuery("UPDATE player SET player_role = $rank WHERE player_id = $next_player");
+                            self::notifyAllPlayers("goOut", clienttranslate('${player_name} goes out!'), [
+                                'player_id' => $next_player,
+                                'player_name' => $next_player_name,
+                                'rank' => $rank,
+                            ]);
+                            if ($rank == 1 && self::getGameStateValue("downfall") && self::getPlayersNumber() > 2) {
+                                $downfall_player = self::getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = 1 AND player_id IN (".implode(',', $remaining_players).")");
+                                if ($downfall_player) {
+                                    self::incStat(1, 'downfall', $downfall_player);
+                                    $this->DbQuery("UPDATE player SET player_role = 70 WHERE player_id = $downfall_player");
+                                    $this->cards->moveAllCardsInLocation('hand', 'removed', $downfall_player, $downfall_player);
+                                    self::notifyAllPlayers("goOut", clienttranslate('The former President ${player_name} fails to get the first place and is disqualified!'), [
+                                        'player_id' => $downfall_player,
+                                        'player_name' => self::getPlayerNameById($downfall_player),
+                                        'rank' => 70,
+                                    ]);
+                                }
+                            }
+    
+                            $hand_player_count = count($this->cards->countCardsByLocationArgs('hand'));
+                            if ($revolution && count($hand) >= 4 && $hand_player_count > 1) {
+                                self::setGameStateValue("regular_revolution", 1 - $regular_revolution);
+                                self::incStat(1, 'revolution', $player_id);
+                                self::notifyAllPlayers("noSound", clienttranslate('Playing 4 or more cards reverses the card rank during this round!'), []);
+                            }
+                            if ($jack_back && $count_jack && !($ender_8 && $count_8) && $hand_player_count > 1) {
+                                self::setGameStateValue("temporary_revolution", 1 - $temporary_revolution);
+                                self::notifyAllPlayers("noSound", clienttranslate('J effect reverses the card rank during this trick!'), []);
+                            }
+                            if ($reversing_9 && $count_9) {
+                                self::setGameStateValue("reversed", 1 - self::getGameStateValue("reversed"));
+                                self::notifyAllPlayers("noSound", clienttranslate('9 effect reverses the turn order permanently!'), []);
+                            }
+                            if ($ender_8 && $count_8 && $hand_player_count > 1) self::notifyAllPlayers("noSound", clienttranslate('8 effect ends this trick immediately!'), []);
+                            if ($table_combination) {
+                                if ($hand_combination['value'] == $table_combination['value'] && !($ender_8 && $count_8) && $hand_player_count > 1) {
+                                    self::setGameStateValue("skip_turn", 1);
+                                    $next_next_player = $this->getSurvivingNextPlayer($next_player);
+                                    $this->DbQuery("UPDATE player SET player_has_passed = 1 WHERE player_id = $next_next_player");
+                                    self::notifyAllPlayers("passTurn", clienttranslate('Playing the same rank skips ${player_name}\'s turn!'), [
+                                        'player_id' => $next_next_player,
+                                        'player_name' => self::getPlayerNameById($next_next_player),
+                                    ]);
+                                }
+                            }
+                            if ($lock && $hand_player_count > 1) {
+                                self::incStat(1, 'suit_lock', $player_id);
+                                self::notifyAllPlayers("noSound", clienttranslate('Playing the same suit combination locks the suit during this trick!'), []);
+                            }
+    
+                            $autoplay = true;
+                            $transition = $hand_player_count <= 1 ? 'endRound' : 'autoPlay';
+                        }
+                    }
+
+                    if (!$autoplay) {
+                        if (count($hand) < count($table_cards) || $table_combination['value'] == 14) $autopass = true;
+                        else if (self::getGameStateValue("automatic_skip")) {
+                            $hand_cards = array_merge($this->cards->getCardsInLocation('hand'), $this->cards->getCardsInLocation('deck'), $this->cards->getCardsInLocation('removed'));
+                            // suit lock의 경우 구성이 2종류 이상이면 set 구성이 확정이므로 set만 판정
+                            // 1종류라면 hand_cards에서 해당 카드 모두 제거 후 판정 진행
+                        }
+
+                        if ($autopass) {
+                            $transition = 'autoPass';
+                            $this->DbQuery("UPDATE player SET player_has_passed = 1 WHERE player_id = '$next_player'");
+                            self::notifyAllPlayers("passTurn", '', ['player_id' => $next_player]);
+                        }
+                    }
+                }
+            }
+        }
+        $this->gamestate->nextState($transition);
+    }
+
+    function stEndTrick() {
+        $transition = 'nextTrick';
+        $table_cards = $this->cards->getCardsInLocation('cardsontable');
+        $table_card_list = $table_cards;
+        $player_id = array_shift($table_card_list)['location_arg'];
+        $player_name = self::getPlayerNameById($player_id);
+        
+        $this->cards->moveAllCardsInLocationKeepOrder('cardsontable', 'discard');
+        $this->DbQuery("UPDATE player SET player_has_passed = 0");
+        self::setGameStateValue("temporary_revolution", 0);
+        self::setGameStateValue("skip_turn", 0);
+        self::setGameStateValue("suit_lock_prep", 0);
+        self::setGameStateValue("suit_lock_complete", 0);
+        self::notifyAllPlayers("endTrick", clienttranslate('${player_name} wins this trick'), [
+            'player_id' => $player_id,
+            'player_name' => $player_name,
         ]);
+
+        $hand_player_count = $this->cards->countCardsByLocationArgs('hand');
+        if (count($hand_player_count) <= 1) $transition = 'endRound';
+        else {
+            if (!$this->cards->countCardInLocation('hand', $player_id)) $player_id = self::getSurvivingNextPlayer($player_id);
+            $this->gamestate->changeActivePlayer($player_id);
+            $hand = $this->cards->getCardsInLocation('hand', $player_id);
+            $hand_combination = $this->evaluateCombination($hand);
+            $playable = (bool)$hand_combination;
+            if ($playable && $hand_combination['type'] == 1 && !self::getGameStateValue("sequence")) $playable = !$playable;
+            if ($playable) {
+                $ender_8 = self::getGameStateValue("ender_8");
+                $suit_count = [0, 0, 0, 0];
+                $count_joker = 0;
+                $count_8 = 0;
+                $count_9 = 0;
+                $count_jack = 0;
+                $count_2 = 0;
+                $count_3 = 0;
+                foreach ($hand as $card) {
+                    if ($card['type'] == 4) $count_joker++;
+                    else $suit_count[$card['type']]++;
+                    switch ($card['type_arg']) {
+                        case 1:
+                            $count_3++;
+                            break;
+                        case 6:
+                            $count_8++;
+                            break;
+                        case 7:
+                            $count_9++;
+                            break;
+                        case 9:
+                            $count_jack++;
+                            break;
+                        case 13:
+                            $count_2++;
+                            break;
+                    }
+                }
+                $regular_revolution = self::getGameStateValue("regular_revolution");
+                $temporary_revolution = self::getGameStateValue("temporary_revolution");
+                $illegal_finish = self::getGameStateValue("illegal_finish");
+                $current_revolution_status = (bool)$regular_revolution ^ (bool)$temporary_revolution;
+                if ($illegal_finish && count($hand) > 1) {
+                    if ($count_joker || (!$current_revolution_status && $count_2) || ($current_revolution_status && $count_3) || ($ender_8 && $count_8)) $playable = false;
+                }
+                if ($playable) {
+                    $transition = 'autoPlay';
+                    $revolution = self::getGameStateValue("revolution");
+                    $reversing_9 = self::getGameStateValue("reversing_9");
+                    $jack_back = self::getGameStateValue("jack_back");
+                    $this->cards->moveAllCardsInLocation('hand', 'cardsontable', $player_id, $player_id);
+
+                    $logs = [];
+                    $args = [];
+                    $i = 0;
+                    foreach ($hand_combination['card_list'] as $card) {
+                        $logs[] = '${color'.$i.'}${value'.$i.'}';
+                        $args['i18n'][] = 'color'.$i;
+                        $args['color'.$i] = $this->colors[$card['type']];
+                        $args['value'.$i] = $this->values_label[$card['type_arg']];
+                        $i++;
+                    }
+                    $full_log = ['log' => implode('-', $logs), 'args' => $args];
+
+                    if (self::getGameStateValue("suit_lock") && !($ender_8 && $count_8) && !$count_joker)
+                        self::setGameStateValue("suit_lock_prep", $suit_count[0] + $suit_count[1] * 100 + $suit_count[2] * 10000 + $suit_count[3] * 1000000);
+
+                    $player_name = self::getActivePlayerName();
+                    self::notifyAllPlayers('playCard', clienttranslate('${player_name} plays ${card_list}'), [
+                        'player_id' => $player_id,
+                        'player_name' => $player_name,
+                        'card_list' => $full_log,
+                        'combination' => $hand_combination,
+                        'suit_lock' => false,
+                    ]);
+
+                    $remaining_players = array_keys($this->cards->countCardsByLocationArgs('hand'));
+                    if (self::getGameStateValue("illegal_finish") && ($count_joker || (!$current_revolution_status && $count_2) || ($current_revolution_status && $count_3) || ($ender_8 && $count_8)))
+                        $rank = 100 - self::getUniqueValueFromDB("SELECT count(*) FROM player WHERE player_role >= 71 AND player_id != $player_id AND player_id NOT IN (".implode(',', $remaining_players).")");
+                    else $rank = 1 + self::getUniqueValueFromDB("SELECT count(*) FROM player WHERE player_role < 50 AND player_id != $player_id AND player_id NOT IN (".implode(',', $remaining_players).")");
+                    $this->DbQuery("UPDATE player SET player_role = $rank WHERE player_id = $player_id");
+                    if ($rank >= 71) self::incStat(1, 'illegal_finish', $player_id);
+                    self::notifyAllPlayers("goOut", $rank >= 71 ? clienttranslate('${player_name} goes out by illegal finish and is disqualified!') : clienttranslate('${player_name} goes out!'), [
+                        'player_id' => $player_id,
+                        'player_name' => $player_name,
+                        'rank' => $rank,
+                    ]);
+                    if ($rank == 1 && self::getGameStateValue("downfall") && self::getPlayersNumber() > 2) {
+                        $downfall_player = self::getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = 1 AND player_id IN (".implode(',', $remaining_players).")");
+                        if ($downfall_player) {
+                            self::incStat(1, 'downfall', $downfall_player);
+                            $this->DbQuery("UPDATE player SET player_role = 70 WHERE player_id = $downfall_player");
+                            $this->cards->moveAllCardsInLocation('hand', 'removed', $downfall_player, $downfall_player);
+                            self::notifyAllPlayers("goOut", clienttranslate('The former President ${player_name} fails to get the first place and is disqualified!'), [
+                                'player_id' => $downfall_player,
+                                'player_name' => self::getPlayerNameById($downfall_player),
+                                'rank' => 70,
+                            ]);
+                        }
+                    }
+
+                    $hand_player_count = count($this->cards->countCardsByLocationArgs('hand'));
+                    if ($revolution && count($hand) >= 4 && $hand_player_count > 1) {
+                        self::setGameStateValue("regular_revolution", 1 - $regular_revolution);
+                        self::incStat(1, 'revolution', $player_id);
+                        self::notifyAllPlayers("noSound", clienttranslate('Playing 4 or more cards reverses the card rank during this round!'), []);
+                    }
+                    if ($jack_back && $count_jack && !($ender_8 && $count_8) && $hand_player_count > 1) {
+                        self::setGameStateValue("temporary_revolution", 1 - $temporary_revolution);
+                        self::notifyAllPlayers("noSound", clienttranslate('J effect reverses the card rank during this trick!'), []);
+                    }
+                    if ($reversing_9 && $count_9) {
+                        self::setGameStateValue("reversed", 1 - self::getGameStateValue("reversed"));
+                        self::notifyAllPlayers("noSound", clienttranslate('9 effect reverses the turn order permanently!'), []);
+                    }
+                    if ($ender_8 && $count_8 && $hand_player_count > 1) self::notifyAllPlayers("noSound", clienttranslate('8 effect ends this trick immediately!'), []);
+
+                    $transition = $hand_player_count <= 1 ? 'endRound' : 'autoPlay';
+                }
+            }
+        }
+        $this->gamestate->nextState($transition);
     }
+
+    function stEndRound() {
+        $scoring_rule = self::getGameStateValue("scoring_rule");
+        $target_score = self::getGameStateValue("target_score");
+        $hand_players = array_keys($this->cards->countCardsByLocationArgs('hand'));
+        $hand_player = array_shift($hand_players);
+        $this->DbQuery("UPDATE player SET player_role = 20 WHERE player_id = $hand_player");
+
+        $rank_list = self::getCollectionFromDb("SELECT player_id id, player_role role FROM player ORDER BY player_role", true);
+        $player_count = count($rank_list);
+        $current_rank = 1;
+        $player_list = [];
+        foreach ($rank_list as $player_id => $rank) {
+            $player_list[$player_id] = $current_rank;
+            $current_rank++;
+        }
+
+        $nameRow = [''];
+        $roundRankRow = [['str' => clienttranslate('Round rank'), 'args' => []]];
+        $roundScoreRow = [['str' => clienttranslate('Round score'), 'args' => []]];
+        $totalScoreRow = [['str' => clienttranslate('Total score'), 'args' => []]];
+        foreach ($player_list as $player_id => $rank) {
+            $nameRow[] = [
+                'str' => '${player_name}',
+                'args' => ['player_name' => self::getPlayerNameById($player_id)],
+                'type' => 'header'
+            ];
+            $roundRankRow[] = $rank;
+            if ($scoring_rule) {
+                if ($rank == 1) $score = $player_count > 3 ? 1 : 0;
+                else if ($rank == $player_count) $score = $player_count > 3 ? -3 : -2;
+                else if ($rank == 2 && $player_count > 3) $score = 0;
+                else if ($rank == $player_count - 1 && $player_count > 3) $score = -2;
+                else $score = -1;
+            } else $score = $player_count - $rank;
+            
+            if ($rank == 1) self::incStat(1, 'first_rank', $player_id);
+            else if ($rank == $player_count) self::incStat(1, 'last_rank', $player_id);
+            else if ($rank == 2 && $player_count > 3) self::incStat(1, 'second_rank', $player_id);
+            else if ($rank == $player_count - 1 && $player_count > 3) self::incStat(1, 'second_last_rank', $player_id);
+
+            $roundScoreRow[] = $score;
+            $totalScoreRow[] = $this->dbIncScore($player_id, $score);
+            if ($score) self::notifyAllPlayers('scoreChange', abs($score) == 1 ? clienttranslate('${player_name} scores ${nb} point') : clienttranslate('${player_name} scores ${nb} points'), [
+                'player_id' => $player_id,
+                'player_name' => self::getPlayerNameById($player_id),
+                'nb' => $score,
+            ]);
+        }
+
+        self::notifyAllPlayers('tableWindow', '', [
+            'id' => 'roundScoring',
+            "title" => clienttranslate("Round end summary"),
+            'table' => [$nameRow, $roundRankRow, $roundScoreRow, $totalScoreRow],
+            "closing" => clienttranslate("Close"),
+        ]);
+
+        if ($scoring_rule) $transition = self::getUniqueValueFromDb("SELECT MIN(player_score) FROM player") <= 0 ? 'endGame' : 'nextRound';
+        else $transition = self::getUniqueValueFromDb("SELECT MAX(player_score) FROM player") >= $target_score ? 'endGame' : 'nextRound';
+        if ($transition == 'endGame') foreach ($player_list as $player_id => $rank) $this->DbQuery("UPDATE player SET player_score_aux = -$rank WHERE player_id = $player_id");
+        $this->gamestate->nextState($transition);
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Zombie
 ////////////
 
     /*
         zombieTurn:
-        
+
         This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
         You can do whatever you want in order to make sure the turn of this player ends appropriately
         (ex: pass).
-        
+
         Important: your zombie code will be called when the player leaves the game. This action is triggered
         from the main site and propagated to the gameserver from a server, not from a browser.
         As a consequence, there is no current player associated to this action. In your zombieTurn function,
         you must _never_ use getCurrentPlayerId() or getCurrentPlayerName(), otherwise it will fail with a "Not logged" error message. 
     */
 
-    function zombieTurn( $state, $active_player )
-    {
-        if (!self::isCurrentPlayerZombie()) {
-            return;
-        }
-
-    	$statename = $state['name'];
-        if ($state['type'] === "game") {
-            switch ($statename) {
-                case 'newHand':
-                case 'endHand':
-                case 'gameEnd':
-                case 'newRound':
-                case 'passTurn':
-                case 'nextPlayer':
-                case 'endPresidentSwap':
-                case 'endPrimeMinisterSwapTurn':
-                    break;
-            }
-
-            return;
-        }
+    function zombieTurn ($state, $active_player) {
+        $statename = $state['name'];
 
         if ($state['type'] === "activeplayer") {
             switch ($statename) {
+                case 'presidentGive':
+                    $all_ids = self::getObjectListFromDB("SELECT card_id FROM card WHERE card_location = 'hand' AND card_location_arg = $active_player", true);
+                    shuffle($all_ids);
+                    $card_ids = array_slice($all_ids, 0, 2);
+                    $this->giveCard($card_ids);
+                    break;
+                case 'ministerGive':
+                    $all_ids = self::getObjectListFromDB("SELECT card_id FROM card WHERE card_location = 'hand' AND card_location_arg = $active_player", true);
+                    shuffle($all_ids);
+                    $card_id = array_shift($all_ids);
+                    $this->giveCard([$card_id]);
+                    break;
                 case 'playerTurn':
-                    $cardsIds = [];
-                    $lastCardValue = '';
-                    $lastCardPlayed = self::getGameStateValue(GS::lastCardValue);
-                    $currentHandType = self::getGameStateValue(GS::currentHandType);
-                    $revolutionTrick = self::getGameStateValue(GS::isRevolutionTrick);
-
-                    if ($revolutionTrick == 0) {
-                        $cards = $this->getCardsByLocationOrderedByValue( $active_player, 20);
-                    } else {
-                        $cards = $this->getCardsByLocationOrderedByValue( $active_player, 20, 'DESC');
-                    }
-
-                    foreach ($cards as $card) {
-                        if ($currentHandType == 0) {
-                            if ($lastCardValue) {
-                                if ($lastCardValue == $card['type_arg']) {
-                                    $cardsIds[] = $card['id'];
-                                } else {
-                                    break;
-                                }
-                            } else {
-                                $cardsIds[] = $card['id'];
-                                $lastCardValue = $card['type_arg'];
-                            }
-                        } else {
-                            if ($lastCardValue) {
-                                if (count($cardsIds) == $currentHandType) {
-                                    break;
-                                } else {
-                                    if ($lastCardValue == $card['type_arg']) {
-                                        $cardsIds[] = $card['id'];
-                                    } else {
-                                        $cardsIds = [$card['id']];
-                                        $lastCardValue = $card['type_arg'];
-                                    }
-                                }
-                            } else {
-                                if ($revolutionTrick == 0) {
-                                    if ($card['type_arg'] > $lastCardPlayed) {
-                                        $cardsIds[] = $card['id'];
-                                        $lastCardValue = $card['type_arg'];
-                                    }
-                                } else {
-                                    if ($card['type_arg'] < $lastCardPlayed) {
-                                        $cardsIds[] = $card['id'];
-                                        $lastCardValue = $card['type_arg'];
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (count($cardsIds) == $currentHandType || $currentHandType == 0) {
-                        $this->playCards($cardsIds);
-                    } else {
-                        $this->passTurn();
-                    }
+                    $this->DbQuery("UPDATE player SET player_has_passed = 1 WHERE player_id = '$active_player'");
+                    self::notifyAllPlayers("passTurn", '', [
+                        'player_id' => $active_player,
+                        'player_name' => self::getPlayerNameById($active_player),
+                    ]);
+                    $this->gamestate->nextState('');
                     break;
-                case 'presidentSwapTurn':
-                    $cardsIds = [];
-                    $cards = $this->getCardsByLocationOrderedByValue( $active_player, 2);
-                    foreach ($cards as $card) {
-                        $cardsIds[] = $card['id'];
-                    }
-                    $this->swapCards($cardsIds);
-                    break;
-                case 'primeMinisterSwapTurn':
-                    $cardsIds = [];
-                    $cards = $this->getCardsByLocationOrderedByValue( $active_player, 1);
-                    foreach ($cards as $card) {
-                        $cardsIds[] = $card['id'];
-                    }
-                    $this->swapCards($cardsIds);
-                    break;
-                default:
-                    $this->gamestate->nextState( "zombiePass" );
-                	break;
             }
-
             return;
         }
 
         if ($state['type'] === "multipleactiveplayer") {
             // Make sure player is in a non blocking status for role turn
-            $this->gamestate->setPlayerNonMultiactive( $active_player, '' );
-            
+            $this->gamestate->setPlayerNonMultiactive($active_player, '');
             return;
         }
 
-        throw new feException( "Zombie mode not supported at this game state: ".$statename );
+        throw new feException("Zombie mode not supported at this game state: ".$statename);
     }
-    
+
 ///////////////////////////////////////////////////////////////////////////////////:
 ////////// DB upgrade
 //////////
@@ -1072,34 +1201,19 @@ EOT;
         Database scheme.
         In this case, if you change your Database scheme, you just have to apply the needed changes in order to
         update the game database and allow the game to continue to run with your new version.
-    
     */
     
-    function upgradeTableDb( $from_version )
-    {
+    function upgradeTableDb ($from_version) {
         // $from_version is the current version of this game database, in numerical form.
         // For example, if the game was running with a release of your game named "140430-1345",
         // $from_version is equal to 1404301345
-        
-        // Example:
-//        if( $from_version <= 1404301345 )
-//        {
-//            // ! important ! Use DBPREFIX_<table_name> for all tables
-//
-//            $sql = "ALTER TABLE DBPREFIX_xxxxxxx ....";
-//            self::applyDbUpgradeToAllDB( $sql );
-//        }
-//        if( $from_version <= 1405061421 )
-//        {
-//            // ! important ! Use DBPREFIX_<table_name> for all tables
-//
-//            $sql = "CREATE TABLE DBPREFIX_xxxxxxx ....";
-//            self::applyDbUpgradeToAllDB( $sql );
-//        }
-//        // Please add your future database scheme changes here
-//
-//
 
-
+        if ($from_version <= 2102022025) {
+            self::setGameStateValue("scoring_rule", 1);
+            self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_card SET card_type = card_type - 1");
+            self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_card SET card_type_arg = card_type_arg - ".(self::getGameStateValue("automatic_skip") ? 1 : 2));
+            self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_card SET card_type_arg = 0 WHERE card_type = 4");
+            self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_player SET player_score = player_score / 5");
+        }
     }    
 }
