@@ -1,48 +1,48 @@
 {OVERALL_GAME_HEADER}
 
-
-<div id="player_table" class="player_table_{NB_PLAYER}">
-    <div id="revolution_box" class="revolution qHidden"></div>
-    <div id="round_box" class="round_box">{ROUND} : <span id="round_count"></span></div>
-
+<!-- 
+--------
+-- BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+-- Fixes and variants implementation: © ufm <tel2tale@gmail.com>
+-- 
+-- This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+-- See http://en.boardgamearena.com/#!doc/Studio for more information.
+-------
+-->
+<div id="variant_wrap" class="whiteblock" style="text-align:center;">
+    <b>{REVOLUTION}{GAP_1}{JOKER}{GAP_2}{FIRST_PLAYER_MODE}{GAP_3}{SAME_RANK_SKIP}{GAP_4}{SEQUENCE}{GAP_5}{SUIT_LOCK}{GAP_6}{ENDER_8}{GAP_7}{REVERSING_9}{GAP_8}{JACK_BACK}{GAP_9}{ILLEGAL_FINISH}{GAP_10}{DOWNFALL}</b>
+</div>
+<div id="game_board" class="{SPECTATOR} {GAME_BOARD_WIDTH}">
+    <div class="whiteblock" id="played_card">
+        <div id="played_card_container"></div>
+        <div class="playertablename" id="status_bar"><span id="lock_text"></span> <span id="reverse_text"></span> <span id="revolution_text"></span></div>
+    </div>
     <!-- BEGIN player -->
-    <div class="player_card card_place_{NB_PLAYER}_{PLACE_ID}">
-        <p class="player_name whiteblock" title="{PLAYER_NAME}" style="color:#{PLAYER_COLOR}">
-            {PLAYER_NAME}
-        </p>
-        <div id="player_cards_{PLAYER_ID}" class="card_places">
-            <div class="cardIcon" id="playerCardCount_p{PLAYER_ID}" style="width: 30px; right:43%; bottom:30%;"></div>
-            <div class="cardIcon" id="playerIsPlaying_p{PLAYER_ID}" style="width: 20px; height: 21px; right:17%; bottom:30%; padding: 0px;"></div>
-            <div class="cardIcon" id="playerCardRole_p{PLAYER_ID}" style="right:30%; bottom:0%;"></div>
+    <div class="playertable whiteblock playertable_{DIR}" id="playertable_{PLAYER_ID}">
+        <div class="playertablename" style="color:#{PLAYER_COLOR}"><span id="rankname_{PLAYER_ID}" style="text-shadow: none;"></span> {PLAYER_NAME}</div>
+        <div class="cardspace hand_card card card_back" id="playertablecard_{PLAYER_ID}">
+            <div class="cardspace hand_count" id="hand_{PLAYER_ID}"></div>
+            <div class="cardspace rank_count" id="rank_{PLAYER_ID}"></div>
         </div>
     </div>
     <!-- END player -->
-
-    <div id="table">
-        <div class="tableCard" id="tableCard"></div>
-    </div>
 </div>
-
 
 <div id="myhand_wrap" class="whiteblock">
-    <h3 style="padding: 5px">{MY_HAND}</h3>
-    <div id="myhand">
-    </div>
+    <div id="myhand_rank"></div>
+    <b><span id="rankname_{THIS_PLAYER_ID}" style="text-shadow: none;"></span> {MY_HAND}</b>
+    <a href="#" class="reordercards" id="order_by_value" style="display:none;">[{REORDER_CARDS_BY_VALUE}]</a>
+    <a href="#" class="reordercards" id="order_by_suit">[{REORDER_CARDS_BY_SUIT}]</a>
+    <div id="myhand"><div id="myhand_placeholder"></div></div>
 </div>
 
-<script type="text/javascript">
+<!-- BEGIN audio_list -->
+<audio id="audiosrc_{GAME_NAME}_{AUDIO}" src="{GAMETHEMEURL}img/{GAME_NAME}_{AUDIO}.mp3" preload="none" autobuffer></audio>
+<audio id="audiosrc_o_{GAME_NAME}_{AUDIO}" src="{GAMETHEMEURL}img/{GAME_NAME}_{AUDIO}.ogg" preload="none" autobuffer></audio>
+<!-- END audio_list -->
 
-    // Javascript HTML templates
-    var jstpl_plays = '<div class="cardsOnTable" id="play_${play_id}"></div>';
-    var jstpl_cardontable = '<div class="cardOnTable" id="cardontable_${card_id}" style="background-position:-${x}px -${y}px; margin:${margin}"></div>';
-    var jstpl_counterHand = '<span>x ${nbCards}</span>';
-    var jstpl_isPlaying = '<span style="top:1px" class="${playingClass}"></span>';
-    var jstpl_role = '<span style="margin-right: 0px;" class="${roleClass}"></span>';
-    var jstpl_player_board = '<div class="cards_board" id="cards_board_p${id}" style="padding: 3px">' +
-    '<div class="icon16 icon16_hand cards_count"></div><span class="qIcon" id="card_count_p${id}">${count}</span>' +
-    '<div id="playing_icon_p${id}" class="icon20 icon20_want_to_play qIcon playingClass ${playingClass}"></div>' +
-    '<div id="pass_icon_p${id}" class="icon20 icon20_know_game qIcon passClass ${passClass}"></div>' +
-    '<div id="role_icon_p${id}" class="${roleClass}"></div></div>';
-</script>
+<script type="text/javascript">
+var jstpl_card = '<div class="cardspace card card_${card_style}" id="card_${id}" style="background-position: -${x}00% -${y}00%"></div>';
+</script>  
 
 {OVERALL_GAME_FOOTER}
