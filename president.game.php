@@ -110,11 +110,10 @@ class President extends Table {
                 break;
         }
         if (count($players) == 2) {
-            self::setGameStateValue("scoring_rule", 1);
             self::setGameStateValue("reversing_9", 0);
             self::setGameStateValue("downfall", 0);
         }
-        if (self::getGameStateValue('scoring_rule')) $this->DbQuery("UPDATE player SET player_score = ".self::getGameStateValue('target_score'));
+        if (self::getGameStateValue('scoring_rule')) $this->DbQuery("UPDATE player SET player_score = ".(self::getGameStateValue('target_score') * 5));
 
         // Init game statistics
         self::initStat('table', 'round_number', 0);
@@ -200,8 +199,10 @@ class President extends Table {
 
     function getGameProgression() {
         $target_score = self::getGameStateValue("target_score");
-        if (self::getGameStateValue("scoring_rule")) return floor(($target_score - self::getUniqueValueFromDb("SELECT MIN(player_score) FROM player")) / $target_score * 100);
-        else return floor(self::getUniqueValueFromDb("SELECT MAX(player_score) FROM player") / $target_score * 100);
+        if (self::getGameStateValue("scoring_rule")) {
+            $target_score *= 5;
+            return floor(($target_score - self::getUniqueValueFromDb("SELECT MIN(player_score) FROM player")) / $target_score * 100);
+        } else return floor(self::getUniqueValueFromDb("SELECT MAX(player_score) FROM player") / ($target_score * self::getPlayersNumber()) * 100);
     }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -536,7 +537,7 @@ class President extends Table {
                     self::incStat(1, 'downfall', $downfall_player);
                     $this->DbQuery("UPDATE player SET player_role = 70 WHERE player_id = $downfall_player");
                     $this->cards->moveAllCardsInLocation('hand', 'removed', $downfall_player, $downfall_player);
-                    self::notifyAllPlayers("goOut", clienttranslate('The former President ${player_name} fails to get the first place and is disqualified!'), [
+                    self::notifyAllPlayers("goOut", clienttranslate('${player_name} fails to get the first place and is disqualified!'), [
                         'player_id' => $downfall_player,
                         'player_name' => self::getPlayerNameById($downfall_player),
                         'rank' => 70,
@@ -1201,7 +1202,7 @@ class President extends Table {
         ]);
 
         if ($scoring_rule) $transition = self::getUniqueValueFromDb("SELECT MIN(player_score) FROM player") <= 0 ? 'endGame' : 'nextRound';
-        else $transition = self::getUniqueValueFromDb("SELECT MAX(player_score) FROM player") >= $target_score ? 'endGame' : 'nextRound';
+        else $transition = self::getUniqueValueFromDb("SELECT MAX(player_score) FROM player") >= $target_score * $player_count ? 'endGame' : 'nextRound';
         if ($transition == 'endGame') foreach ($player_list as $player_id => $rank) $this->DbQuery("UPDATE player SET player_score_aux = -$rank WHERE player_id = $player_id");
         $this->gamestate->nextState($transition);
     }

@@ -89,9 +89,15 @@ function (dojo, declare) {
             }
 
             // Setting up player boards
-            if (gamedatas.scoring_rule == 0) document.querySelectorAll('.player_score_value').forEach(e => e.classList.add('target_score_' + gamedatas.target_score));
             for (let player_id in gamedatas.players) {
                 const player = gamedatas.players[player_id];
+
+                if (gamedatas.scoring_rule == 0) {
+                    let target_score_tag = document.createElement("span");
+                    target_score_tag = ' / ' + (gamedatas.target_score * Object.keys(gamedatas.players).length);
+                    document.getElementById('player_score_' + player_id).after(target_score_tag);
+                }
+
                 if (player_id != this.player_id) {
                     document.getElementById('playertablecard_' + player_id).classList.add('card_' + this.prefs[100].value);
                     this.hand_counters[player_id] = new ebg.counter();

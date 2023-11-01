@@ -14,9 +14,21 @@ $game_options = [
     100 => [
         'name' => totranslate('Target score'),
         'values' => [
-            10 => ['name' => '10', 'tmdisplay' => '10'],
-            15 => ['name' => '15', 'tmdisplay' => '15'],
-            20 => ['name' => '20', 'tmdisplay' => '20'],
+            2 => [
+                'name' => totranslate('Short game'),
+                'description' => totranslate('2x player count for positive scoring, 10 starting points for negative scoring'),
+                'tmdisplay' => totranslate('Short game'),
+            ],
+            3 => [
+                'name' => totranslate('Medium game'),
+                'description' => totranslate('3x player count for positive scoring, 15 starting points for negative scoring'),
+                'tmdisplay' => totranslate('Medium game'),
+            ],
+            4 => [
+                'name' => totranslate('Long game'),
+                'description' => totranslate('4x player count for positive scoring, 20 starting points for negative scoring'),
+                'tmdisplay' => totranslate('Long game'),
+            ],
         ],
     ],
     113 => [
@@ -33,7 +45,6 @@ $game_options = [
                 'tmdisplay' => totranslate('Negative scoring'),
             ],
         ],
-        'displaycondition' => [['type' => 'minplayers', 'value' => [3, 4, 5, 6, 7, 8]]],
     ],
     114 => [
         'name' => totranslate('Rule set'),
