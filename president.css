@@ -27,7 +27,7 @@
     border-radius: 10px;
 }
 #game_board.shrink {width: 500px;}
-#game_board.three_player {width: 360px;}
+#game_board.three_player {width: 390px;}
 #game_board.two_player {width: 240px;}
 #game_board.spectator {height: 630px;}
 .playertable {

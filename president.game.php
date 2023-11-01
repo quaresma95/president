@@ -134,7 +134,7 @@ class President extends Table {
         for ($color = 0; $color < 4; $color++)
             for ($value = 1; $value <= 13; $value++)
                 $cards[] = ['type' => $color, 'type_arg' => $value, 'nbr' => 1];
-        $cards[] = ['type' => 4, 'type_arg' => 0, 'nbr' => 1];
+        if (self::getGameStateValue('joker')) $cards[] = ['type' => 4, 'type_arg' => 0, 'nbr' => 1];
         $this->cards->createCards($cards, 'deck');
 
         // Activate first player (which is in general a good idea :) )
@@ -423,10 +423,11 @@ class President extends Table {
         $hand_combination = $this->evaluateCombination($cards);
         $suit_lock_complete = self::getGameStateValue("suit_lock_complete");
         if (!$hand_combination) throw new BgaUserException(self::_("Please play a valid combination"));
-        else if ($hand_combination['type'] == 1 && !self::getGameStateValue("sequence")) throw new BgaUserException(self::_("You cannot play sequences in this table"));
+        else if ($hand_combination['type'] == 1 && !self::getGameStateValue("sequence")) throw new BgaUserException(self::_("Same suit sequences are not allowed in this table"));
         if ($table_combination) {
             if ($hand_combination['type'] != $table_combination['type'] || count($cards) != count($table_cards)) throw new BgaUserException(self::_("You cannot play this combination now"));
-            else if ($hand_combination['value'] < $table_combination['value'] || ($hand_combination['value'] == $table_combination['value'] && !self::getGameStateValue("same_rank_skip"))) throw new BgaUserException(self::_("This combination cannot beat the current combination"));
+            else if ($hand_combination['value'] < $table_combination['value']) throw new BgaUserException(self::_("This combination cannot beat the previous combination"));
+            else if ($hand_combination['value'] == $table_combination['value'] && !self::getGameStateValue("same_rank_skip")) throw new BgaUserException(self::_("Same rank skip is not allowed in this table"));
             if ($suit_lock_complete) {
                 $lacking_count = 0;
                 $locked_count = [];
@@ -435,10 +436,10 @@ class President extends Table {
                 $locked_count[2] = floor(($suit_lock_complete % 1000000) / 10000);
                 $locked_count[3] = floor($suit_lock_complete / 1000000);
                 for ($i = 0; $i <= 3; $i++) {
-                    if ($suit_count[$i] > $locked_count[$i]) throw new BgaUserException(self::_("This combination does not follow suit lock"));
+                    if ($suit_count[$i] > $locked_count[$i]) throw new BgaUserException(self::_("This combination does not follow the previous suit combination"));
                     else if ($suit_count[$i] < $locked_count[$i]) $lacking_count += $locked_count[$i] - $suit_count[$i];
                 }
-                if ($lacking_count != $count_joker) throw new BgaUserException(self::_("This combination does not follow suit lock"));
+                if ($lacking_count != $count_joker) throw new BgaUserException(self::_("This combination does not follow the previous suit combination"));
             }
         }
         
@@ -747,54 +748,57 @@ class President extends Table {
                     $hand = $this->cards->getCardsInLocation('hand', $next_player);
                     $hand_combination = $this->evaluateCombination($hand);
                     $playable = (bool)$hand_combination;
-                    if ($playable && $hand_combination['type'] == 1 && !self::getGameStateValue("sequence")) $playable = !$playable;
-                    if ($playable) {
-                        $suit_count = [0, 0, 0, 0];
-                        $count_joker = 0;
-                        $count_8 = 0;
-                        $count_9 = 0;
-                        $count_jack = 0;
-                        $count_2 = 0;
-                        $count_3 = 0;
-                        foreach ($hand as $card) {
-                            if ($card['type'] == 4) $count_joker++;
-                            else $suit_count[$card['type']]++;
-                            switch ($card['type_arg']) {
-                                case 1:
-                                    $count_3++;
-                                    break;
-                                case 6:
-                                    $count_8++;
-                                    break;
-                                case 7:
-                                    $count_9++;
-                                    break;
-                                case 9:
-                                    $count_jack++;
-                                    break;
-                                case 13:
-                                    $count_2++;
-                                    break;
-                            }
+                    
+                    $suit_count = [0, 0, 0, 0];
+                    $suit_lock_complete = self::getGameStateValue("suit_lock_complete");
+                    $sequence = self::getGameStateValue("sequence");
+                    $same_rank_skip = self::getGameStateValue("same_rank_skip");
+                    $locked_count = [];
+                    $count_joker = 0;
+                    $count_8 = 0;
+                    $count_9 = 0;
+                    $count_jack = 0;
+                    $count_2 = 0;
+                    $count_3 = 0;
+                    if ($playable) foreach ($hand as $card) {
+                        if ($card['type'] == 4) $count_joker++;
+                        else $suit_count[$card['type']]++;
+                        switch ($card['type_arg']) {
+                            case 1:
+                                $count_3++;
+                                break;
+                            case 6:
+                                $count_8++;
+                                break;
+                            case 7:
+                                $count_9++;
+                                break;
+                            case 9:
+                                $count_jack++;
+                                break;
+                            case 13:
+                                $count_2++;
+                                break;
                         }
-    
-                        $same_rank_skip = self::getGameStateValue("same_rank_skip");
+                    }
+
+                    if ($suit_lock_complete) {
+                        $lacking_count = 0;
+                        $locked_count[0] = $suit_lock_complete % 100;
+                        $locked_count[1] = floor(($suit_lock_complete % 10000) / 100);
+                        $locked_count[2] = floor(($suit_lock_complete % 1000000) / 10000);
+                        $locked_count[3] = floor($suit_lock_complete / 1000000);
+                        for ($i = 0; $i <= 3; $i++) {
+                            if ($suit_count[$i] > $locked_count[$i]) $playable = false;
+                            else if ($suit_count[$i] < $locked_count[$i]) $lacking_count += $locked_count[$i] - $suit_count[$i];
+                        }
+                        if ($lacking_count != $count_joker) $playable = false;
+                    }
+
+                    if ($playable && $hand_combination['type'] == 1 && !$sequence) $playable = !$playable;
+                    if ($playable) {
                         if ($hand_combination['type'] != $table_combination['type'] || count($hand) != count($table_cards)) $playable = false;
                         if ($hand_combination['value'] < $table_combination['value'] || ($hand_combination['value'] == $table_combination['value'] && !$same_rank_skip)) $playable = false;
-                        $suit_lock_complete = self::getGameStateValue("suit_lock_complete");
-                        if ($suit_lock_complete && $playable) {
-                            $lacking_count = 0;
-                            $locked_count = [];
-                            $locked_count[0] = $suit_lock_complete % 100;
-                            $locked_count[1] = floor(($suit_lock_complete % 10000) / 100);
-                            $locked_count[2] = floor(($suit_lock_complete % 1000000) / 10000);
-                            $locked_count[3] = floor($suit_lock_complete / 1000000);
-                            for ($i = 0; $i <= 3; $i++) {
-                                if ($suit_count[$i] > $locked_count[$i]) $playable = false;
-                                else if ($suit_count[$i] < $locked_count[$i]) $lacking_count += $locked_count[$i] - $suit_count[$i];
-                            }
-                            if ($lacking_count != $count_joker) $playable = false;
-                        }
     
                         $regular_revolution = self::getGameStateValue("regular_revolution");
                         $temporary_revolution = self::getGameStateValue("temporary_revolution");
@@ -912,9 +916,77 @@ class President extends Table {
                     if (!$autoplay) {
                         if (count($hand) < count($table_cards) || $table_combination['value'] == 14) $autopass = true;
                         else if (self::getGameStateValue("automatic_skip")) {
+                            $current_revolution_status = (bool)self::getGameStateValue("regular_revolution") ^ (bool)self::getGameStateValue("temporary_revolution");
+                            $multiplier = $current_revolution_status ? -1 : 1;
                             $hand_cards = array_merge($this->cards->getCardsInLocation('hand'), $this->cards->getCardsInLocation('deck'), $this->cards->getCardsInLocation('removed'));
-                            // suit lock의 경우 구성이 2종류 이상이면 set 구성이 확정이므로 set만 판정
-                            // 1종류라면 hand_cards에서 해당 카드 모두 제거 후 판정 진행
+                            $remaining_joker_count = 0;
+                            if ($suit_lock_complete) {
+                                $locked_suit_types = [];
+                                for ($i = 0; $i <= 3; $i++) if ($locked_count[$i] > 0) $locked_suit_types[] = $i;
+                                foreach ($hand_cards as $key => $card)
+                                    if (!in_array($card['type'], $locked_suit_types)) {
+                                        unset($hand_cards[$key]);
+                                        if ($card['type'] == 4) $remaining_joker_count++;
+                                    }
+                            } else {
+                                foreach ($hand_cards as $key => $card)
+                                    if ($card['type'] == 4) {
+                                        unset($hand_cards[$key]);
+                                        $remaining_joker_count++;
+                                    }
+                            }
+
+                            switch ($table_combination['type']) {
+                                default:
+                                    $value_color_array = [];
+                                    foreach ($hand_cards as $card) {
+                                        if (!isset($value_color_array[$card['type_arg']])) $value_color_array[$card['type_arg']] = [$card['type']];
+                                        else $value_color_array[$card['type_arg']][] = $card['type'];
+                                    }
+                                    $autopass = count($table_cards) > $remaining_joker_count;
+                                    if ($autopass) foreach ($value_color_array as $value => $colors) {
+                                        $true_value = $value * $multiplier;
+                                        if (count($colors) + $remaining_joker_count >= count($table_cards) && ($true_value > $table_combination['value'] || ($same_rank_skip && $true_value == $table_combination['value']))) {
+                                            $autopass = false;
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                case 1:
+                                    $color_value_array = [];
+                                    foreach ($hand_cards as $card) {
+                                        if (!isset($color_value_array[$card['type']])) $color_value_array[$card['type']] = [$card['type_arg']];
+                                        else $color_value_array[$card['type']][] = $card['type_arg'];
+                                    }
+                                    $autopass = true;
+                                    $current_check_value = $table_combination['value'] * $multiplier + ($same_rank_skip ? $multiplier : 0);
+                                    foreach ($color_value_array as $values) {
+                                        if ($current_revolution_status) {
+                                            while ($current_check_value > 0) {
+                                                $gap = 0;
+                                                for ($i = $current_check_value; $i < $current_check_value + count($table_cards); $i++)
+                                                    if (!in_array($i, $values)) $gap++;
+                                                if ($gap <= $remaining_joker_count) {
+                                                    $autopass = false;
+                                                    break 2;
+                                                }
+                                                $current_check_value--;
+                                            }
+                                        } else {
+                                            while ($current_check_value < 14) {
+                                                $gap = 0;
+                                                for ($i = $current_check_value; $i > $current_check_value + count($table_cards); $i--)
+                                                    if (!in_array($i, $values)) $gap++;
+                                                if ($gap <= $remaining_joker_count) {
+                                                    $autopass = false;
+                                                    break 2;
+                                                }
+                                                $current_check_value++;
+                                            }
+                                        }
+                                    }
+                                    break;
+                            }
                         }
 
                         if ($autopass) {

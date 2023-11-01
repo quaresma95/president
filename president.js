@@ -51,6 +51,11 @@ function (dojo, declare) {
             this.addTooltip('reverse_text', _('Turn order has been reversed'), '');
             this.addTooltip('lock_text', _('The same suit must be followed'), '');
             this.updateSpecialStatus();
+            if (this.reversed) {
+                this.gamedatas.playerorder = this.gamedatas.playerorder.reverse();
+                this.gamedatas.playerorder.unshift(this.gamedatas.playerorder.pop());
+                this.updatePlayerOrdering();
+            }
 
             // Counter and stock initialization
             if (this.isSpectator) document.getElementById("myhand_wrap").style.display = 'none';
@@ -588,6 +593,9 @@ function (dojo, declare) {
             if (this.gamedatas.reversing_9 > 0 && found_9) {
                 this.reversed = !this.reversed;
                 update_status = true;
+                this.gamedatas.playerorder = this.gamedatas.playerorder.reverse();
+                this.gamedatas.playerorder.unshift(this.gamedatas.playerorder.pop());
+                this.updatePlayerOrdering();
             }
             if (update_status) this.updateSpecialStatus();
             if (current_revolution_status != this.regular_revolution ^ this.temporary_revolution) {

@@ -44,9 +44,9 @@ $game_options = [
                 'tmdisplay' => totranslate('Full variant'),
             ],
             1 => [
-                'name' => totranslate('Vanilla'),
+                'name' => totranslate('No variant'),
                 'description' => totranslate('Removes all variants.'),
-                'tmdisplay' => totranslate('Vanilla'),
+                'tmdisplay' => totranslate('No variant'),
             ],
             100 => [
                 'name' => totranslate('Custom'),
@@ -83,18 +83,19 @@ $game_options = [
     104 => [
         'name' => totranslate('First player'),
         'values' => [
-            0 => [
-                'name' => totranslate('Lowest player first'),
-                'description' => totranslate('From the second round, the lowest ranked player plays first.'),
-                'tmdisplay' => totranslate('Lowest player first'),
-            ],
             1 => [
                 'name' => totranslate('Highest player first'),
                 'description' => totranslate('From the second round, the highest ranked player plays first.'),
                 'tmdisplay' => totranslate('Highest player first'),
             ],
+            0 => [
+                'name' => totranslate('Lowest player first'),
+                'description' => totranslate('From the second round, the lowest ranked player plays first.'),
+                'tmdisplay' => totranslate('Lowest player first'),
+            ],
         ],
         'displaycondition' => [$custom_only],
+        'default' => 0,
     ],
     101 => [
         'name' => totranslate('Same rank skip'),
@@ -110,6 +111,7 @@ $game_options = [
             ],
         ],
         'displaycondition' => [$custom_only],
+        'default' => 1,
     ],
     106 => [
         'name' => totranslate('Same suit sequence'),
