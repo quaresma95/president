@@ -959,7 +959,7 @@ class President extends Table {
                                         else $color_value_array[$card['type']][] = $card['type_arg'];
                                     }
                                     $autopass = true;
-                                    $current_check_value = $table_combination['value'] * $multiplier + ($same_rank_skip ? $multiplier : 0);
+                                    $current_check_value = $table_combination['value'] * $multiplier + ($same_rank_skip ? 0 : $multiplier);
                                     foreach ($color_value_array as $values) {
                                         if ($current_revolution_status) {
                                             while ($current_check_value > 0) {
@@ -975,7 +975,7 @@ class President extends Table {
                                         } else {
                                             while ($current_check_value < 14) {
                                                 $gap = 0;
-                                                for ($i = $current_check_value; $i > $current_check_value + count($table_cards); $i--)
+                                                for ($i = $current_check_value; $i > $current_check_value - count($table_cards); $i--)
                                                     if (!in_array($i, $values)) $gap++;
                                                 if ($gap <= $remaining_joker_count) {
                                                     $autopass = false;
