@@ -30,6 +30,7 @@ $game_options = [
                 'tmdisplay' => totranslate('Long game'),
             ],
         ],
+        'default' => 3,
     ],
     113 => [
         'name' => totranslate('Scoring rule'),

@@ -673,7 +673,7 @@ class President extends Table {
         } else {
             $player_list = self::getCollectionFromDb("SELECT player_id id, player_role role FROM player ORDER BY player_no", true);
             $player_count = count($player_list);
-            $deal_count = $player_count == 2 ? 19 : floor($deck_count / $player_count);
+            $deal_count = $player_count == 2 ? 14 : floor($deck_count / $player_count);
             $deck_count -= $deal_count * $player_count;
             foreach ($player_list as $player_id => $player) {
                 $rank_list[$player_id] = 0;
