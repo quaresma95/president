@@ -915,7 +915,7 @@ class President extends Table {
                     }
 
                     if (!$autoplay) {
-                        if (count($hand) < count($table_cards) || $table_combination['value'] == 14) $autopass = true;
+                        if (count($hand) < count($table_cards) || $table_combination['value'] == 14 || (count($table_cards) == 1 && count($hand) == 1)) $autopass = true;
                         else if (self::getGameStateValue("automatic_skip")) {
                             $current_revolution_status = (bool)self::getGameStateValue("regular_revolution") ^ (bool)self::getGameStateValue("temporary_revolution");
                             $multiplier = $current_revolution_status ? -1 : 1;
