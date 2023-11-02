@@ -531,15 +531,18 @@ class President extends Table {
                 'player_name' => $player_name,
                 'rank' => $rank,
             ]);
-            if ($rank == 1 && self::getGameStateValue("downfall") && self::getPlayersNumber() > 2) {
+            $player_count = self::getPlayersNumber();
+            if ($rank == 1 && self::getGameStateValue("downfall") && $player_count > 2) {
                 $downfall_player = self::getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = 1 AND player_id IN (".implode(',', $remaining_players).")");
                 if ($downfall_player) {
                     self::incStat(1, 'downfall', $downfall_player);
                     $this->DbQuery("UPDATE player SET player_role = 70 WHERE player_id = $downfall_player");
                     $this->cards->moveAllCardsInLocation('hand', 'removed', $downfall_player, $downfall_player);
-                    self::notifyAllPlayers("goOut", clienttranslate('${player_name} fails to get the first place and is disqualified!'), [
+                    self::notifyAllPlayers("goOut", clienttranslate('The former ${role_name} ${player_name} fails to get the first place and is disqualified!'), [
+                        'i18n' => ['role_name'],
                         'player_id' => $downfall_player,
                         'player_name' => self::getPlayerNameById($downfall_player),
+                        'role_name' => $player_count > 3 ? clienttranslate('President') : clienttranslate('Minister'),
                         'rank' => 70,
                     ]);
                 }
@@ -864,15 +867,18 @@ class President extends Table {
                                 'player_name' => $next_player_name,
                                 'rank' => $rank,
                             ]);
-                            if ($rank == 1 && self::getGameStateValue("downfall") && self::getPlayersNumber() > 2) {
+                            $player_count = self::getPlayersNumber();
+                            if ($rank == 1 && self::getGameStateValue("downfall") && $player_count > 2) {
                                 $downfall_player = self::getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = 1 AND player_id IN (".implode(',', $remaining_players).")");
                                 if ($downfall_player) {
                                     self::incStat(1, 'downfall', $downfall_player);
                                     $this->DbQuery("UPDATE player SET player_role = 70 WHERE player_id = $downfall_player");
                                     $this->cards->moveAllCardsInLocation('hand', 'removed', $downfall_player, $downfall_player);
-                                    self::notifyAllPlayers("goOut", clienttranslate('The former President ${player_name} fails to get the first place and is disqualified!'), [
+                                    self::notifyAllPlayers("goOut", clienttranslate('The former ${role_name} ${player_name} fails to get the first place and is disqualified!'), [
+                                        'i18n' => ['role_name'],
                                         'player_id' => $downfall_player,
                                         'player_name' => self::getPlayerNameById($downfall_player),
+                                        'role_name' => $player_count > 3 ? clienttranslate('President') : clienttranslate('Minister'),
                                         'rank' => 70,
                                     ]);
                                 }
@@ -1108,15 +1114,18 @@ class President extends Table {
                         'player_name' => $player_name,
                         'rank' => $rank,
                     ]);
-                    if ($rank == 1 && self::getGameStateValue("downfall") && self::getPlayersNumber() > 2) {
+                    $player_count = self::getPlayersNumber();
+                    if ($rank == 1 && self::getGameStateValue("downfall") && $player_count > 2) {
                         $downfall_player = self::getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = 1 AND player_id IN (".implode(',', $remaining_players).")");
                         if ($downfall_player) {
                             self::incStat(1, 'downfall', $downfall_player);
                             $this->DbQuery("UPDATE player SET player_role = 70 WHERE player_id = $downfall_player");
                             $this->cards->moveAllCardsInLocation('hand', 'removed', $downfall_player, $downfall_player);
                             self::notifyAllPlayers("goOut", clienttranslate('The former President ${player_name} fails to get the first place and is disqualified!'), [
+                                'i18n' => ['role_name'],
                                 'player_id' => $downfall_player,
                                 'player_name' => self::getPlayerNameById($downfall_player),
+                                'role_name' => $player_count > 3 ? clienttranslate('President') : clienttranslate('Minister'),
                                 'rank' => 70,
                             ]);
                         }
