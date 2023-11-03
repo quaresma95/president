@@ -1308,9 +1308,9 @@ class President extends Table {
         if ($from_version <= 2102022025) {
             self::setGameStateValue("scoring_rule", 1);
             self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_card SET card_type = card_type - 1");
-            self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_card SET card_type_arg = card_type_arg - ".(self::getGameStateValue("automatic_skip") ? 1 : 2));
+            self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_card SET card_type_arg = card_type_arg - ".(self::getGameStateValue("automatic_skip") == 15 ? 2 : 1));
             self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_card SET card_type_arg = 0 WHERE card_type = 4");
             self::applyDbUpgradeToAllDB("UPDATE DBPREFIX_player SET player_score = player_score / 5");
         }
-    }    
+    }
 }
