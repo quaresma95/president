@@ -12,7 +12,7 @@
 $custom_only = ['type' => 'otheroption', 'id' => 114, 'value' => 100];
 $game_options = [
     100 => [
-        'name' => totranslate('Target score'),
+        'name' => totranslate('Game length'),
         'values' => [
             2 => [
                 'name' => totranslate('Short game'),
