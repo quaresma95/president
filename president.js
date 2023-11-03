@@ -296,7 +296,7 @@ function (dojo, declare) {
                 rank_text.style.display = 'unset';
                 this.addTooltip('rankname_' + player_id, player_count > 3 ? _('President') : _('Minister'), '');
             } else if (role == player_count) {
-                rank_text.textContent = player_count > 3 ? '💸' : '💦';
+                rank_text.textContent = player_count > 3 ? '💸' : '⛏️';
                 rank_text.style.display = 'unset';
                 this.addTooltip('rankname_' + player_id, player_count > 3 ? _('Beggar') : _('Peasant'), '');
             } else if (role == 2 && player_count > 3) {
@@ -304,7 +304,7 @@ function (dojo, declare) {
                 rank_text.style.display = 'unset';
                 this.addTooltip('rankname_' + player_id, _('Minister'), '');
             } else if (role == player_count - 1 && player_count > 3) {
-                rank_text.textContent = '💦';
+                rank_text.textContent = '⛏️';
                 rank_text.style.display = 'unset';
                 this.addTooltip('rankname_' + player_id, _('Peasant'), '');
             } else {
