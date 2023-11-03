@@ -51,11 +51,16 @@ $game_options = [
         'name' => totranslate('Rule set'),
         'values' => [
             0 => [
+                'name' => totranslate('Moderate variant'),
+                'description' => totranslate('Activates Revolution and Downfall variant. Add a Joker which can be used as the strongest single or a wild. From the second round, the lowest ranked player plays first.'),
+                'tmdisplay' => totranslate('Moderate variant'),
+            ],
+            1 => [
                 'name' => totranslate('Full variant'),
                 'description' => totranslate('Activates all variants.'),
                 'tmdisplay' => totranslate('Full variant'),
             ],
-            1 => [
+            2 => [
                 'name' => totranslate('No variant'),
                 'description' => totranslate('Removes all variants.'),
                 'tmdisplay' => totranslate('No variant'),
@@ -86,7 +91,7 @@ $game_options = [
             1 => [
                 'name' => totranslate('Enabled'),
                 'description' => totranslate('1 Joker is added. The Joker can be used as the strongest single card which is unaffected by Revolutions, or can be mixed with other cards as a wild.'),
-                'tmdisplay' => totranslate('Enabled'),
+                'tmdisplay' => totranslate('Joker'),
             ],
         ],
         'displaycondition' => [$custom_only],

@@ -82,7 +82,20 @@ class President extends Table {
         // Rule set initialization
         $rule_set = self::getGameStateValue("rule_set");
         switch ($rule_set) {
-            default:
+            case 0:
+                self::setGameStateInitialValue("revolution", 1);
+                self::setGameStateInitialValue("joker", 1);
+                self::setGameStateInitialValue("first_player_mode", 0);
+                self::setGameStateInitialValue("same_rank_skip", 0);
+                self::setGameStateInitialValue("sequence", 0);
+                self::setGameStateInitialValue("suit_lock", 0);
+                self::setGameStateInitialValue("ender_8", 0);
+                self::setGameStateInitialValue("reversing_9", 0);
+                self::setGameStateInitialValue("jack_back", 0);
+                self::setGameStateInitialValue("illegal_finish", 0);
+                self::setGameStateInitialValue("downfall", 1);
+                break;
+            case 1:
                 self::setGameStateInitialValue("revolution", 1);
                 self::setGameStateInitialValue("joker", 1);
                 self::setGameStateInitialValue("first_player_mode", 0);
@@ -95,7 +108,7 @@ class President extends Table {
                 self::setGameStateInitialValue("illegal_finish", 1);
                 self::setGameStateInitialValue("downfall", 1);
                 break;
-            case 1:
+            case 2:
                 self::setGameStateInitialValue("revolution", 0);
                 self::setGameStateInitialValue("joker", 0);
                 self::setGameStateInitialValue("first_player_mode", 1);
@@ -1289,6 +1302,8 @@ class President extends Table {
         // $from_version is the current version of this game database, in numerical form.
         // For example, if the game was running with a release of your game named "140430-1345",
         // $from_version is equal to 1404301345
+
+        if ($from_version <= 2311032018) $this->cards->moveAllCardsInLocationKeepOrder('cardsontable', 'discard');
 
         if ($from_version <= 2102022025) {
             self::setGameStateValue("scoring_rule", 1);
