@@ -149,7 +149,7 @@ $game_options = [
             0 => ['name' => totranslate('Disabled')],
             1 => [
                 'name' => totranslate('Enabled'),
-                'description' => totranslate('If a player plays a combination of the same suit as the previous play, all further plays during the trick must be the same suit combination. The Joker cannot activate a suit lock, but can be used as the required suit during a locked trick.'),
+                'description' => totranslate('If a player plays a combination of the same suit as the previous play, all further plays during the same trick must be the same suit combination. The Joker cannot activate a suit lock, but can be used as the required suit during a locked trick.'),
                 'tmdisplay' => totranslate('Suit lock'),
             ],
         ],
@@ -188,7 +188,7 @@ $game_options = [
             0 => ['name' => totranslate('Disabled')],
             1 => [
                 'name' => totranslate('Enabled'),
-                'description' => totranslate('Playing one or more Jacks reverses card ranks or cancels the rank reversal during the trick.'),
+                'description' => totranslate('Playing one or more Jacks reverses card ranks or cancels the rank reversal during the same trick.'),
                 'tmdisplay' => totranslate('Jack back'),
             ],
         ],

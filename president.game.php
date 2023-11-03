@@ -172,7 +172,7 @@ class President extends Table {
         // Get information about players
         // Note: you can retrieve some extra field you added for "player" table in "dbmodel.sql" if you need it.
         $result['players'] = self::getCollectionFromDb("SELECT player_id id, player_score score, player_has_passed pass, player_role role FROM player");
-  
+
         // Gather all information about current game situation (visible by player $current_player_id).
         $result['hand_count'] = $this->cards->countCardsByLocationArgs('hand');
         $result['hand'] = $this->cards->getPlayerHand($current_player_id);
@@ -720,7 +720,7 @@ class President extends Table {
             $first_player_mode = self::getGameStateValue("first_player_mode");
             $first_player = $this->getUniqueValueFromDB("SELECT player_id FROM player WHERE player_role = ".(self::getGameStateValue("first_player_mode") ? 1 : $player_count));
             $this->gamestate->changeActivePlayer($first_player);
-            self::notifyAllPlayers('noSound', clienttranslate('${player_name} starts the first round as ${role_name}'), [
+            self::notifyAllPlayers('noSound', clienttranslate('As ${role_name}, ${player_name} plays first'), [
                 'i18n' => ['role_name'],
                 'player_name' => self::getPlayerNameById($first_player),
                 'role_name' => $first_player_mode ? ($player_count < 4 ? clienttranslate('Minister') : clienttranslate('President')) : ($player_count < 4 ? clienttranslate('Peasant') : clienttranslate('Beggar')),
@@ -1134,7 +1134,7 @@ class President extends Table {
                             self::incStat(1, 'downfall', $downfall_player);
                             $this->DbQuery("UPDATE player SET player_role = 70 WHERE player_id = $downfall_player");
                             $this->cards->moveAllCardsInLocation('hand', 'removed', $downfall_player, $downfall_player);
-                            self::notifyAllPlayers("goOut", clienttranslate('The former President ${player_name} fails to get the first place and is disqualified!'), [
+                            self::notifyAllPlayers("goOut", clienttranslate('The former ${role_name} ${player_name} fails to get the first place and is disqualified!'), [
                                 'i18n' => ['role_name'],
                                 'player_id' => $downfall_player,
                                 'player_name' => self::getPlayerNameById($downfall_player),
