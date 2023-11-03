@@ -52,7 +52,7 @@ $game_options = [
         'values' => [
             0 => [
                 'name' => totranslate('Moderate variant'),
-                'description' => totranslate('Activates Revolution and Downfall variant. Add a Joker which can be used as the strongest single or a wild. From the second round, the lowest ranked player plays first.'),
+                'description' => totranslate('Activates Revolution, Same rank skip and Downfall variant. Add a Joker which can be used as the strongest single or a wild. From the second round, the lowest ranked player plays first.'),
                 'tmdisplay' => totranslate('Moderate variant'),
             ],
             1 => [

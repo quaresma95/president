@@ -86,7 +86,7 @@ class President extends Table {
                 self::setGameStateInitialValue("revolution", 1);
                 self::setGameStateInitialValue("joker", 1);
                 self::setGameStateInitialValue("first_player_mode", 0);
-                self::setGameStateInitialValue("same_rank_skip", 0);
+                self::setGameStateInitialValue("same_rank_skip", 1);
                 self::setGameStateInitialValue("sequence", 0);
                 self::setGameStateInitialValue("suit_lock", 0);
                 self::setGameStateInitialValue("ender_8", 0);
