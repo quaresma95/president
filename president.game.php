@@ -1264,12 +1264,12 @@ class President extends Table {
                     $this->giveCard([$card_id]);
                     break;
                 case 'playerTurn':
-                    $this->DbQuery("UPDATE player SET player_has_passed = 1 WHERE player_id = '$active_player'");
-                    self::notifyAllPlayers("passTurn", '', [
-                        'player_id' => $active_player,
-                        'player_name' => self::getPlayerNameById($active_player),
-                    ]);
-                    $this->gamestate->nextState('');
+                    if (!$this->cards->getCardsInLocation('cardsontable')) {
+                        $all_ids = self::getObjectListFromDB("SELECT card_id FROM card WHERE card_location = 'hand' AND card_location_arg = $active_player", true);
+                        shuffle($all_ids);
+                        $card_id = array_shift($all_ids);
+                        $this->playCard([$card_id]);
+                    } else $this->passTurn();
                     break;
             }
             return;
